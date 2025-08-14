@@ -1,0 +1,122 @@
+---
+title: "Data cleaning"
+output: pdf_document
+date: "2025-08-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+## Step 1- LOAD DATA
+
+```{r load-data}
+access_df <- read.csv("access-to-health-care_national_zaf.csv")
+child_df  <- read.csv("child-mortality-rates_national_zaf.csv")
+immun_df  <- read.csv("immunization_national_zaf.csv")
+maternal_df <- read.csv("maternal-mortality_national_zaf.csv")
+
+# Clean column names
+clean_names <- function(df) {
+  colnames(df) <- colnames(df) %>%
+    str_to_lower() %>%
+    str_replace_all(" ", "_") %>%
+    str_replace_all("\\.", "_")
+  return(df)
+}
+
+# Apply cleaning
+access_df <- clean_names(access_df)
+child_df  <- clean_names(child_df)
+immun_df  <- clean_names(immun_df)
+maternal_df <- clean_names(maternal_df)
+
+```
+
+## Step 2 - HANDLING MISSING VALUES
+
+```{r handle-missingvalues}
+fill_missing <- function(df) {
+  df <- df %>% mutate(across(where(is.numeric), ~ ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+  return(df)
+}
+
+access_df <- fill_missing(access_df)
+child_df  <- fill_missing(child_df)
+immun_df  <- fill_missing(immun_df)
+maternal_df <- fill_missing(maternal_df)
+```
+
+## Step 3 - SCALING NUMERIC VALUES
+
+```{r scale-numericvalues}
+scale_numeric <- function(df) {
+  df_scaled <- df %>%
+    mutate(across(where(is.numeric), ~ (.-min(.))/(max(.)-min(.))))
+  return(df_scaled)
+}
+
+access_scaled <- scale_numeric(access_df)
+child_scaled  <- scale_numeric(child_df)
+immun_scaled  <- scale_numeric(immun_df)
+maternal_scaled <- scale_numeric(maternal_df)
+```
+## STEP 4 - SPLITING DATASETS
+
+```{r split-dataset }
+split_data <- function(df, split_ratio = 0.8) {
+  set.seed(123)
+  train_index <- createDataPartition(1:nrow(df), p = split_ratio, list = FALSE)
+  train <- df[train_index, ]
+  test <- df[-train_index, ]
+  return(list(train = train, test = test))
+}
+
+access_split <- split_data(access_scaled)
+child_split  <- split_data(child_scaled)
+immun_split  <- split_data(immun_scaled)
+maternal_split <- split_data(maternal_scaled)
+```
+## STEP 5 - AGGREGATE DATA
+
+```{r aggregate-data}
+aggregate_by_year <- function(df) {
+  if("year" %in% colnames(df)) {
+    df %>%
+      group_by(year) %>%
+      summarise(across(where(is.numeric), mean, na.rm = TRUE))
+  } else {
+    return(NULL)
+  }
+}
+
+access_agg <- aggregate_by_year(access_df)
+child_agg  <- aggregate_by_year(child_df)
+immun_agg  <- aggregate_by_year(immun_df)
+maternal_agg <- aggregate_by_year(maternal_df)
+
+```
+
+
+STEP 6 - SAVE TRANSFORMED DATA
+
+```{r save-transformeddata}
+write.csv(access_scaled, "access_scaled.csv", row.names = FALSE)
+write.csv(child_scaled, "child_scaled.csv", row.names = FALSE)
+write.csv(immun_scaled, "immun_scaled.csv", row.names = FALSE)
+write.csv(maternal_scaled, "maternal_scaled.csv", row.names = FALSE)
+
+if(!is.null(access_agg)) write.csv(access_agg, "access_aggregated.csv", row.names = FALSE)
+if(!is.null(child_agg)) write.csv(child_agg, "child_aggregated.csv", row.names = FALSE)
+if(!is.null(immun_agg)) write.csv(immun_agg, "immun_aggregated.csv", row.names = FALSE)
+if(!is.null(maternal_agg)) write.csv(maternal_agg, "maternal_aggregated.csv", row.names = FALSE)
+
+cat("✅ Data transformation and aggregation complete.\n")
+```
