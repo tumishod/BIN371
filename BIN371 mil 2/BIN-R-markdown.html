@@ -358,7 +358,9 @@ display: none;
 library(knitr)
 library(ggplot2)
 library(here)
-library(readr)</code></pre>
+library(readr)
+library(dplyr)
+library(tidyr)</code></pre>
 <div id="dataset-overview" class="section level2">
 <h2>2.1 Dataset Overview</h2>
 <pre class="r"><code>access_healthcare &lt;- read.csv(&quot;access-to-health-care_national_zaf.csv&quot;)
@@ -370,11 +372,6 @@ access_healthcare &lt;- access_healthcare[-1, ]
 child_mortality &lt;- child_mortality[-1, ]
 immunization &lt;- immunization[-1, ]
 maternal_mortality &lt;- maternal_mortality[-1, ]</code></pre>
-<p>#Opens up view</p>
-<pre class="r"><code>view(access_healthcare)
-view(maternal_mortality)
-view(immunization)
-view(child_mortality)</code></pre>
 <p>#Chnages data types</p>
 <pre class="r"><code>#Changing Data types
 
@@ -409,10 +406,23 @@ child_mortality$RegionId &lt;- NULL
 immunization$RegionId &lt;- NULL
 maternal_mortality$RegionId &lt;- NULL
 
-# Dropping Column RegionalId no values</code></pre>
+# Dropping Column RegionalId suplicate values
+access_healthcare$SurveyYearLabel &lt;- NULL
+child_mortality$SurveyYearLabel&lt;- NULL
+immunization$SurveyYearLabel &lt;- NULL
+maternal_mortality$SurveyYearLabel &lt;- NULL
+
+# Dropping Column levelRank no values
+access_healthcare$LevelRank &lt;- NULL
+child_mortality$LevelRank&lt;- NULL
+immunization$LevelRank &lt;- NULL
+maternal_mortality$LevelRank &lt;- NULL</code></pre>
+<p>#FIlling missing values</p>
+<pre class="r"><code>child_mortality$ByVariableLabel[child_mortality$ByVariableLabel == &quot;&quot; | is.na(child_mortality$ByVariableLabel)] &lt;- &quot;Unknown&quot;
+maternal_mortality$ByVariableLabel[maternal_mortality$ByVariableLabel == &quot;&quot; | is.na(maternal_mortality$ByVariableLabel)] &lt;- &quot;Unknown&quot;</code></pre>
 <p>#Structure of datasets</p>
 <pre class="r"><code>str(access_healthcare)</code></pre>
-<pre><code>## &#39;data.frame&#39;:    275 obs. of  28 variables:
+<pre><code>## &#39;data.frame&#39;:    275 obs. of  26 variables:
 ##  $ ISO3                  : chr  &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; ...
 ##  $ DataId                : chr  &quot;751751&quot; &quot;567476&quot; &quot;205488&quot; &quot;751748&quot; ...
 ##  $ Indicator             : chr  &quot;Antenatal care provider: Doctor&quot; &quot;Antenatal care provider: Doctor&quot; &quot;Antenatal care provider: Doctor&quot; &quot;Antenatal care provider: Nurse/midwife&quot; ...
@@ -434,15 +444,13 @@ maternal_mortality$RegionId &lt;- NULL
 ##  $ IsTotal               : int  1 1 1 1 1 1 1 1 1 1 ...
 ##  $ IsPreferred           : int  0 0 1 0 0 1 0 0 1 0 ...
 ##  $ SDRID                 : chr  &quot;RHANCPWDOC&quot; &quot;RHANCPWDOC&quot; &quot;RHANCPWDOC&quot; &quot;RHANCPWNRS&quot; ...
-##  $ SurveyYearLabel       : int  1998 1998 1998 1998 1998 1998 1998 1998 1998 1998 ...
 ##  $ SurveyType            : chr  &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; ...
 ##  $ DenominatorWeighted   : int  2871 4122 2010 2871 4122 2010 2871 4122 2010 2871 ...
 ##  $ DenominatorUnweighted : int  2903 4148 2041 2903 4148 2041 2903 4148 2041 2903 ...
 ##  $ CILow                 : logi  NA NA NA NA NA NA ...
-##  $ CIHigh                : logi  NA NA NA NA NA NA ...
-##  $ LevelRank             : logi  NA NA NA NA NA NA ...</code></pre>
+##  $ CIHigh                : logi  NA NA NA NA NA NA ...</code></pre>
 <pre class="r"><code>str(child_mortality)</code></pre>
-<pre><code>## &#39;data.frame&#39;:    40 obs. of  28 variables:
+<pre><code>## &#39;data.frame&#39;:    40 obs. of  26 variables:
 ##  $ ISO3                  : chr  &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; ...
 ##  $ DataId                : chr  &quot;85995&quot; &quot;794581&quot; &quot;785930&quot; &quot;56239&quot; ...
 ##  $ Indicator             : chr  &quot;Neonatal mortality rate (5 year periods)&quot; &quot;Postneonatal mortality (5 year periods)&quot; &quot;Infant mortality rate (5 year periods)&quot; &quot;Child mortality (5 year periods)&quot; ...
@@ -460,19 +468,17 @@ maternal_mortality$RegionId &lt;- NULL
 ##  $ CharacteristicCategory: chr  &quot;Five year periods&quot; &quot;Five year periods&quot; &quot;Five year periods&quot; &quot;Five year periods&quot; ...
 ##  $ CharacteristicLabel   : chr  &quot;0-4&quot; &quot;0-4&quot; &quot;0-4&quot; &quot;0-4&quot; ...
 ##  $ ByVariableId          : chr  &quot;0&quot; &quot;0&quot; &quot;0&quot; &quot;0&quot; ...
-##  $ ByVariableLabel       : chr  &quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...
+##  $ ByVariableLabel       : chr  &quot;Unknown&quot; &quot;Unknown&quot; &quot;Unknown&quot; &quot;Unknown&quot; ...
 ##  $ IsTotal               : int  1 1 1 1 1 1 1 1 1 1 ...
 ##  $ IsPreferred           : int  1 1 1 1 1 1 0 1 0 1 ...
 ##  $ SDRID                 : chr  &quot;CMECMTCNNR&quot; &quot;CMECMTCPNR&quot; &quot;CMECMTCIMR&quot; &quot;CMECMTCCMR&quot; ...
-##  $ SurveyYearLabel       : int  1998 1998 1998 1998 1998 1998 1998 1998 1998 1998 ...
 ##  $ SurveyType            : chr  &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; ...
 ##  $ DenominatorWeighted   : int  NA NA NA NA NA NA NA NA NA NA ...
 ##  $ DenominatorUnweighted : int  NA NA NA NA NA NA NA NA NA NA ...
 ##  $ CILow                 : int  15 20 38 9 50 15 16 20 19 38 ...
-##  $ CIHigh                : int  25 31 53 20 68 25 23 31 27 53 ...
-##  $ LevelRank             : logi  NA NA NA NA NA NA ...</code></pre>
+##  $ CIHigh                : int  25 31 53 20 68 25 23 31 27 53 ...</code></pre>
 <pre class="r"><code>str(immunization)</code></pre>
-<pre><code>## &#39;data.frame&#39;:    116 obs. of  28 variables:
+<pre><code>## &#39;data.frame&#39;:    116 obs. of  26 variables:
 ##  $ ISO3                  : chr  &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; ...
 ##  $ DataId                : chr  &quot;330965&quot; &quot;139796&quot; &quot;330966&quot; &quot;139797&quot; ...
 ##  $ Indicator             : chr  &quot;BCG vaccination received&quot; &quot;BCG vaccination received&quot; &quot;DPT 1 vaccination received&quot; &quot;DPT 1 vaccination received&quot; ...
@@ -494,15 +500,13 @@ maternal_mortality$RegionId &lt;- NULL
 ##  $ IsTotal               : int  1 1 1 1 1 1 1 1 1 1 ...
 ##  $ IsPreferred           : int  1 0 1 0 1 0 1 0 1 0 ...
 ##  $ SDRID                 : chr  &quot;CHVACSCBCG&quot; &quot;CHVACSCBCG&quot; &quot;CHVACSCDP1&quot; &quot;CHVACSCDP1&quot; ...
-##  $ SurveyYearLabel       : int  1998 1998 1998 1998 1998 1998 1998 1998 1998 1998 ...
 ##  $ SurveyType            : chr  &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; ...
 ##  $ DenominatorWeighted   : int  973 933 973 933 973 933 973 933 973 933 ...
 ##  $ DenominatorUnweighted : int  971 951 971 951 971 951 971 951 971 951 ...
 ##  $ CILow                 : logi  NA NA NA NA NA NA ...
-##  $ CIHigh                : logi  NA NA NA NA NA NA ...
-##  $ LevelRank             : logi  NA NA NA NA NA NA ...</code></pre>
+##  $ CIHigh                : logi  NA NA NA NA NA NA ...</code></pre>
 <pre class="r"><code>str(maternal_mortality)</code></pre>
-<pre><code>## &#39;data.frame&#39;:    21 obs. of  28 variables:
+<pre><code>## &#39;data.frame&#39;:    21 obs. of  26 variables:
 ##  $ ISO3                  : chr  &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; ...
 ##  $ DataId                : chr  &quot;91409&quot; &quot;91377&quot; &quot;768646&quot; &quot;768647&quot; ...
 ##  $ Indicator             : chr  &quot;Female deaths that are pregnancy-related&quot; &quot;Number of pregnancy-related deaths&quot; &quot;Years of exposure to the risk of mortality for women&quot; &quot;Years of exposure to the risk of mortality for women (unweighted)&quot; ...
@@ -520,17 +524,20 @@ maternal_mortality$RegionId &lt;- NULL
 ##  $ CharacteristicCategory: chr  &quot;Total 15-49&quot; &quot;Total 15-49&quot; &quot;Total 15-49&quot; &quot;Total 15-49&quot; ...
 ##  $ CharacteristicLabel   : chr  &quot;Total 15-49&quot; &quot;Total 15-49&quot; &quot;Total 15-49&quot; &quot;Total 15-49&quot; ...
 ##  $ ByVariableId          : chr  &quot;0&quot; &quot;0&quot; &quot;0&quot; &quot;0&quot; ...
-##  $ ByVariableLabel       : chr  &quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...
+##  $ ByVariableLabel       : chr  &quot;Unknown&quot; &quot;Unknown&quot; &quot;Unknown&quot; &quot;Unknown&quot; ...
 ##  $ IsTotal               : int  1 1 1 1 1 1 1 1 1 1 ...
 ##  $ IsPreferred           : int  1 1 1 1 1 1 1 1 1 1 ...
 ##  $ SDRID                 : chr  &quot;MMMMRTWFDP&quot; &quot;MMMMRTWPDT&quot; &quot;MMMMRTWEXP&quot; &quot;MMMMRTWEXU&quot; ...
-##  $ SurveyYearLabel       : int  1998 1998 1998 1998 1998 1998 1998 1998 1998 1998 ...
 ##  $ SurveyType            : chr  &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; ...
 ##  $ DenominatorWeighted   : int  NA NA NA NA 122701 NA NA NA NA NA ...
 ##  $ DenominatorUnweighted : int  NA NA 123738 123738 123738 NA NA NA NA NA ...
 ##  $ CILow                 : int  NA NA NA NA NA NA 77 NA NA NA ...
-##  $ CIHigh                : int  NA NA NA NA NA NA 223 NA NA NA ...
-##  $ LevelRank             : logi  NA NA NA NA NA NA ...</code></pre>
+##  $ CIHigh                : int  NA NA NA NA NA NA 223 NA NA NA ...</code></pre>
+<p>#Opens up view</p>
+<pre class="r"><code>view(access_healthcare)
+view(maternal_mortality)
+view(immunization)
+view(child_mortality)</code></pre>
 <p>#Sum of verious data</p>
 <pre class="r"><code>print(&#39;summary of Health care value&#39;)</code></pre>
 <pre><code>## [1] &quot;summary of Health care value&quot;</code></pre>
@@ -555,13 +562,13 @@ maternal_mortality$RegionId &lt;- NULL
 <pre class="r"><code>print(&#39;Missing Values&#39;)</code></pre>
 <pre><code>## [1] &quot;Missing Values&quot;</code></pre>
 <pre class="r"><code>sum(is.na(access_healthcare))</code></pre>
-<pre><code>## [1] 893</code></pre>
+<pre><code>## [1] 618</code></pre>
 <pre class="r"><code>sum(is.na(child_mortality))</code></pre>
-<pre><code>## [1] 132</code></pre>
+<pre><code>## [1] 92</code></pre>
 <pre class="r"><code>sum(is.na(immunization))</code></pre>
-<pre><code>## [1] 364</code></pre>
+<pre><code>## [1] 248</code></pre>
 <pre class="r"><code>sum(is.na(maternal_mortality))</code></pre>
-<pre><code>## [1] 91</code></pre>
+<pre><code>## [1] 70</code></pre>
 <pre class="r"><code>print(&#39;Duplicate values&#39;)</code></pre>
 <pre><code>## [1] &quot;Duplicate values&quot;</code></pre>
 <pre class="r"><code>sum(duplicated(access_healthcare))</code></pre>
@@ -591,7 +598,2020 @@ ggplot(access_healthcare, aes(x = Value)) +
   geom_histogram(binwidth = 5, fill = &quot;skyblue&quot;, color = &quot;black&quot;) +
   labs(title = &quot;Access to Health Care - Value Distribution&quot;, x = &quot;Value&quot;, y = &quot;Count&quot;) +
   theme_minimal()</code></pre>
-<p><img role="img" src="data:image/png;base64,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BNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo52QwxPoJHxIPXYseVkaArXysjTaCTk4gU4QqJWXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo52Q/dnqIy1TgYo/SQghe05MoGK4BerlZWncArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCZFt9fndF/8w/8Ojd+6enLz2ru2AEKiVl6UhUCsvS6OdENVWj94+WQj0y9dPZvnmb10HhECtvCwNgVp5WRrthKi2enCyFOi9kxffPf9ipVPDASFQKy9LQ6BWXpZGOyGirT6/uxTo53fntz2/fP35n5oOCIFaeVkaArXysjTaCdFsNb0D/zeLx0AfnLw0P+XByQ9NB4RArbwsDYFaeVka7YRotrp38tLySaR7Jz+an/LxUqS3PyAEauVlaQjUysvSaCdEstXH07vvC4E+ent51339pPw6H2mZClT8SUII2XMMAp0/4IlACSF/cjEI9N7s8c6RQE0vZOIuvJeXpXEX3srL0mgnRLDVg/nz71feAlUPCIFaeVkaArXysjTaCbm5rT6/O3cmAtVo/JZagVka4zl5WdrBCPTByTrTe+08C39DGr+lVmCWxnhOXpZ2oAJdvf6T14Fek8ZvqRWYpTGek5elHYxAl1neZ+edSDek8VtqBWZpjOfkZWkHKtBHb5+8wHvhb0Djt9QKzNIYz8nL0g5UoOdf8GlMN6LxW2oFZmmM5+RlaYcq0PMv3pn68zXT7U8E6uZlaQjUysvSaCeET6TvsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqH6g8IIAACAASURBVJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOyG5bPfzJX364/uKT7/yH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1MrL0mgn5Oa2evT2yY9m/53e9Jz+9/O7c41++fri9qjhgBColZelIVArL0ujnZCb2+rL15d31++d/PD8/MHJS/MvHsy+sBwQArXysjQEauVlabQTcgtbzQV6b3FzdHq//iXTASFQKy9LQ6BWXpZGOyG6reb32h+9vbzr/vnd7QdBP9IyFejuk8XzI4QQW2wCnd95Twm00CohhCTjEujH85cxDQRqeiHT7rvwe7xj3+OeRMnL0rgLb+VlabQTonrp47vPzx78vOQWqHpACNTKy9IQqJWXpdFOiOilB8uX0SPQm9L4LbUCszTGc/KytIMS6G9OVi/7DD0Lj0BVXpaGQK28LI12QhQvPbp38sLqAc/V6z/3/DpQBKrysjQEauVlabQTonjp3uB9m6F3IiFQlZelIVArL0ujnRDBSw+G73t/9PbJC4H3wiNQlZelIVArL0ujnRDlrZwnq8we9vwi8mlMCFTlZWkI1MrL0mgn5OZe+vhkQ6DnX7wz/dNrptufCNTNy9IQqJWXpdFOyJF8Ij0CVXlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02gk5SIGObYlAVV6WhkCtvCyNdkIOUaA7bIlAVV6WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkKOQ6C7nOpKjx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12Qo5CoLucakuPHUteloZArbwsjXZCjkGgO2+U2tJjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo52QgxXowJgI9Ba8LA2BWnlZGu2E7E+gH2lZ2HL2n+2TCCHkMScmUDHLm5sTboF6eFkat0CtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIOX6CTCQK9BS9LQ6BWXpZGOyEHL9AJAr0VL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IYct0Mkg+wL22LHkZWkI1MrL0mgn5KAFOkGgt+ZlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCfkQAU6QaAmXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhDo8e942aVz/O0uB2ZpKMbJy9IQ6J5y9DteeukcfbsrgFkainHysjQEuqcc/Y4INEZDMU5eloZA95Sj3xGBxmgoxsnL0hDonnL0OyLQGA3FOHlZGgLdU45+RwQao6EYJy9LQ6B7ytHviEBjNBTj5GVpCHRPOfodEWiMhmKcvCwNge4pR78jAo3RUIyTl6Uh0D3l6HdEoDEainHysjQEuqcc/Y4INEZDMU5eloZA95Sj3xGBxmgoxsnL0hDonnL0OyLQGA3FOHlZ2p+eQLeyL+ClF6wduz+B7r6QHsdv6cZhzI9qb/s9nivhqsyg1F76XbRbLrwHxoDWWaCTyUdbX5suTAR62Y5+7N4EWlxIj8EwG4ex5/0ei0BXZQal9tNv3W618B4YA1pjgU62BOr7hUSgCNQXBOrlDc4egd4mCBSBlkGgqSBQKy/IQqAItAwCTQWBWnlBFgJFoGUQaCoI1MoLshAoAi2DQFNBoFZekIVAEWgZBJoKArXygiwEikDLINBUEKiVF2QhUARaBoGmgkCtvCALgSLQMgg0FQRq5QVZCBSBlkGgqSBQKy/IQqAItAwCTQWBWnlBFgK9qnD1HaNr8+g7PpqdNjp9sjj14myve4Fv8Ua0lgKd88/n7ZaHsTqUYxPo4LhHp+1VoMtz2DifgxHoDa8D1+QpP7R59brBjyHQS4+0+o6NU3d/z87fzYGTVr/Y17uktnnb/7+lQNfsjz6arI9m+L+ORqADN+6Q4x4FugRODlKgN7wOXJcn/MzW1esmP4dAr/6p3advftOub0GghiNAoLcEI9Crg0CvDAK9aRCoLwh0VxDoJefsORtfEOhNg0B9QaC7gkAvOWfP2fiCQG8aBOoLAt0VBHrJOXvOxhcEetMgUF8Q6K4g0EvO2XM2viDQmwaB+oJAdwWBXnLOtz6HR+/cPTl57V3DscyDQG8aBOoLAt0VBHrJOd/2DL58/WSWb/7WcTTnCPTmQaC+INBdQaCXnPNtz+DeyYvvnn/x9smLf3AcDgK9eRCoLwh0VxDoJed8y5///O78tueXrz//U8fhINCbB4H6gkB3BYFecs63/PkHJy8t//vD2x/MLAj0pkGgviDQXUGgl5zzLX/+3smP5v/9eCnSWweB3jQI1BcEuisI9JJzvt2PP3p7edf987vbD4J+pKUWKCGEuCIKCoESQsihCdT1QqbOn+tKOzcwS2M8Jy9L2xNuf7dA1bCjlZelIVArL0ujnRAE2mPHkpelIVArL0ujnZCDexaeHb28LA2BWnlZGu2E3P51oD/c+O/tw45WXpaGQK28LI12Qg7unUjs6OVlaQjUysvSaCfktgJ99PbJC9b3wrOjl5elIVArL0ujnZBbvx7/C/OnMbGjl5elIVArL0ujnZDbv6Hpi3em/nzNdfuTHc28LA2BWnlZGu2E7PfttUrY0crL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hCos4rFTQAABvpJREFUlZel0U7I4QmUEEKOJAiUEELEIFBCCBGDQAkhRAwCJYQQMQiUEELEIFBCCBGDQAkhRAwCJYQQMQiUEELEIFBCCBGDQAkhRAwCJYQQMQiUEELEIFBCCBGDQAkhRMyBCfTRO3dPTl5793Efhilfvv7S8k8bveovjie//+uTk+evLnSk7c5//1fTev/1D4sv+tWb5vO7Ly7qdWv35esn83zzt7Ov9t7usAS6LL/ofvy5d7IU6Eav+ovjyW8Wv6TP/3T2Rbt25w8W9V64otGx1pvm0dsnC4G2a/f53YFA99/usAR67+TFd8+/WG175Hl072Ql0I1e9RdHk49Pnv/b89lhz3//urWbXgfn9f5qMV+7erNM/4pYHHW7dh+vrnSz7L/dQQn0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" width="672" /></p>
+<p><img role="img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABUAAAAPACAMAAADDuCPrAAABR1BMVEUAAAAAADoAAGYAOjoAOmYAOpAAZrY6AAA6OgA6Ojo6OmY6OpA6ZmY6ZpA6ZrY6kJA6kLY6kNtNTU1NTW5NTY5Nbo5NbqtNjshmAABmOgBmOjpmZjpmZmZmZpBmkJBmkLZmkNtmtrZmtttmtv9uTU1ubm5ubo5ujqtujshuq+SOTU2Obk2Obm6Oq6uOq8iOq+SOyOSOyP+QOgCQZjqQZmaQkGaQkLaQtraQttuQ29uQ2/+rbk2rbm6rjm6ryOSr5P+2ZgC2Zjq2Zma2kDq2kGa2kJC2tpC2tra2ttu229u22/+2///Ijk3Ijm7IyKvI5P/I///bkDrbkGbbtmbbtpDbtrbb27bb29vb2//b/7bb///kq27kyI7kyKvk///r6+v/tmb/yI7/25D/27b/29v/5Kv/5Mj/5OT//7b//8j//9v//+T////J9lpIAAAACXBIWXMAAB2HAAAdhwGP5fFlAAAgAElEQVR4nO2d64OkBX2li4gMsGpCIyBKdFdmFyXJbkSTsLCs7erGaMbFCYawTJTmujLT///nrXu/VW/9+nL61Jmqn8/5wnTRXc976nQ9U/eZnBNCCJEyedwHQAghxxoESgghYhAoIYSIQaCEECIGgRJCiBgESgghYhAoIYSIQaCEECIGgRJCiBgESgghYhAoIYSIQaCEECIGgRJCiBgESgghYhAoIYSICQj0dDJ54q39Y4R8cmfy1Q8HXz98YzJ59Zo/+8dvbbea9nzuih96+Ltv35lMJl/5+q9ucpg3yP3J5M/+eXTSUzu+c3z818ons+Nf5pmvvame3fLbb3KBCxRC9p39C3T6S3+1Wfz53bevvqZ5BLoiXSnQhz+7kM+Tv74m52aZ+W2zQdXJINBpnvj+Nc5uxxQ3FejyLBAoObDsX6BnsyvahqcCmV4zr3FNcwj0gnSVQDfd88RNbnldO7MGm7c3tzuu4hHoZPKNq85u5xQ3E+j6LBAoObDsX6CnkyeevtkdNUOud01zCPSCdIVA5+p58s0Ppn98/8cz9ezlIjnbfrzkfnFUukBXF9nDRY2r7lxcBrrmBY43yaFm7wKdXePe2/0w3B5zeAKdPZKxvsN7/um3xg9WWjLDPLf59e4L4vYCXXx15bkgUNI4exfo7BZQ/gpweALdeiptpp69PDB8uvl4yVn1d5dFoPMaV/zdiEBJ4+xboIuHr67xBLU3ByfQkTDv7+mB4Slo2Py0auQR6KzGFWeDQEnj7FugZ3NPnG3dYX34i6cnk8mzb152yqc/nt0//PqvByc8vfUSoPEpi6ye6Vhe697/9tY5Db6vFOgIf/67H89fgvS9D+ZfLa7UQ9JcoPMf+8r3Rmocvb7ok2//5T/tPOPZt7768GdTDz771u4DuTSzDhemnh7lGrvr+De0P3jBUwndvshWDxlcOG5zlOEFNCi28STS+9+esVYjjg5ocBYDk26NOv+LorrwCdlX9i3QxdVh65bGv6yeyl1fF0enXLzk5xsfbp2wegnQ+JRVNgQ6Y2+c08b3FQId4c8/fXnz+fPdAn3vzs4D2vHs+DrbZzz3zOnqTMcHclU2btqerW20+/h3C/QS6K6L7KnB2W2Psi3QZbGhQO8vv//ri/O9lkBHo84EukJza5XEsmeBrn7jN67Vq2vMhS9Hp1xcQVZX6tOLE5Y3qsanrDK81s5fhrpJG37fboGO8cOzGdx13xLoMxVq+7mdzf+zccazC+OZ1XmMD+TKbNyHP139uTj+nQK9DDp6VdRy2cHZbYyyJdBVsYFAX9m6zEYHtEOg41Evu/AJ2Vv2LNCVOIfX6tkV4sk3lzdWntt9ysyo35je1/xsdcrsW2YnnH/28/KUQTYemZzM7ui9//L4u0YvapwsBTrCz58D+v6Hs4ca7mzeZ90kzVHzG3uvjki7H+wbnfHib5O/+PD8sw92HcjVOb3Q3oXuyuPfIdDLoLsEOhPl8ux2jHJxAQ2KDQQ6/Q1ZXWarS3r7gNZnMdT05qiXXfiE7C37FejGTbrV1eJ0eMNz/qfRKbNbGMsrwdniCjp4fG75x/Epg6yvchdP3jw8Hb1yqBLoGL95yvAm16ZAn1vRt8RzVt2xHJ/x3DPP7fq/13zd0+A7769+vD7+sa8uhY4EerYh0B2jbAr0othaoMuHDVbzXEOgO0a97MInZG/Zr0Cnv+nLK+DFVXFw/VxeH8anDI14Ov+f01Oe3Lwqj08ZZH2Vu3DzEHNxeDsFOsafbZxNKdCVbU63jV4KdHzGwye2xwdyjVz0nPrp4uIvjn/sq0uhVwt0e5QNga6KDQS6usxWh30Nge4Y9bILn5C9Zb8CvfhdvrhWn40eoxqfMrzens2vUGczuX3tHz7Y+KmtUwYZvNHy4pxG16zqMdAxfvOsB8bYFGh5k3jrxUXVMc8dMHi8+NIDKbOmT6ljlWwd/9hXl0KvEOiOUTYEOvDeSqDr818eydUC3TXqZRc+IXvLXgU6fKx/srr2nI1+v0enDJ/FmCzu5K1PevbvP9z6pvUpm+QtvZ3vEHUh0B341Tf82z/+5M6kFuiOFwStSZfefhyc8eCH6wMZ/r/RPfv17f7729becfyjo74MeuVjoDtG2RDoU5snbqjwwt9XCHTXqJdd+ITsLXsV6NnmVXH9JPPW7/folO3r8OwaMjjtyTe3v+vJNzfP0SvQxfe8P39941pZNxPoZQ/MbZ3xJQIdHuwlAl1pafWYwE7MtQV6+UW2ujs9vMm/OcoVAt2YB4GSI8s+Bbp9VVw/x6sIdPYK7fUJq9c2jk5ZxS7Qi5dRSgLd8TrQ+89+b/ZCydEZ316gKxWdDS6W8vhvKdDt14GOR7m2QLkFSo4v+xTo5gN/90d+GPyfsW523uH97H/PP5B4cLbjU+bZKdBdd6wrgW7hlw9GPPO17/7T/73kMdD6Ojx6J9Ly4b/xGW8JVHlFzvq5lnX3+vh3CrSGbl9kq8cmNi7ojVH2fBe+/ilC9p99CnTz7d6r154MbwcuftfHp5xe8oTJw9HLPsen3P5JpC38/eXLKM8vfxKpvg6P3gt/tn5x+dYZD3/4ssvhssx/bnp+64Ooj3+AOB25aJwd74WfH/SG1GZZj3KVQC95Eul0t0CLJ5EQKMlnjwLdfFf2/Mut13gurwnjU+5vKvW50XVm1ynDrK9y9694GdNOgY7wQ8CZchd+8ULFAX12MFtX/LPxTfTxgVwv82Jnuy+gs9Fd+MHt3aeuglafxrRbbdcR6OrsVvdXxgc0ehnTjlERKHks2aNAz7buWK++Pl3/+p9dvAp685TB7bXl9WpwnVmKeXzKINd+If1OgY7wA8An0rPwi2v65ueBbt0E+2T8LPyOy+F6mT+2eHpR95Ljv3hsYfY696euglafBzpW24p5lUBX86xcOj6ga76QHoGSfPYo0O17zKsbXes3bq7veY9Pmd1ee/JXy3ceXvzQ7Ao2e/veSrKbpwxyYYzZOV3yVs7d74Uf4U+Xd4Hn727cENAG6bLr8NnsJxefhTT4RPrxGW+/kH3zQK6Z6Xn8+bcGdevjnx3Wk/999dzPU1dBBxfZZ/86+GD9gdq2Rrm4gAqBzt/7+bv1OzB3HND6LAY3m8dv5USgJJ/9CXR8j/n0whCrXOfDRFavaRzkud2nXGT5869uvhZV+jCROX7r3zN6a/S6nVevvg6/t/m+p+dWh7B1xhs/PL4crn/hD288Xnn8s3z3zvjDRLahozdvbb43c8coFxfQboG+snVW9QG9OrzZvzXqVRc+IXvJ/gQ6et55ftti/lu+VslaX6NTHq5fDLP6ZLj1J96t7wmPT9lkLe9Crl/Ac5OPs9vGr8XwxH9aP3C7ENSadOV1ePhSoiffuvjWzTPe/OHx5XC9nE42/76oj391+Tzx6vqNS5dAtwS6fgHu+uzGo6wvoOJZ+NWhrS68HQe0OovRQQ8/zg6Bknz2JtAdr3y8eMrgOh+o/P78838Hp3z2i/kHlj375of1KRd5b3Z+fzH/4/wfY//KDT9QeRu/+IjhGWpxBb14aG9FusZ1+NO/e2b078Jvn/H2D48uh2tlppyN2//18T9875nFRxMP3vlZQjf+Xfi/vKhxcXbjUVYXUPUypt99e/PDm3cc0PIsBs/1b42KQMljyf7/VU5CCGkaBEoIIWIQKCGEiEGghBAiBoESQogYBEoIIWIQKCGEiEGghBAiBoESQogYBEoIIWIQKCGEiEGghBAiBoESQogYBEoIIWIQKCGEiEGghBAiBoESQogYBEoIIWIQKCGEiEGghBAiBoESQoiYwxPoRx+FeVka7azALI3xnLwsbU84BNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo52QwxPoJHxIPXYseVkaArXysjTaCTk4gU4QqJWXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo52Q/dnqIy1TgYo/SQghe05MoGK4BerlZWncArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCUGgPXYseVkaArXysjTaCZFt9fndF/8w/8Ojd+6enLz2ru2AEKiVl6UhUCsvS6OdENVWj94+WQj0y9dPZvnmb10HhECtvCwNgVp5WRrthKi2enCyFOi9kxffPf9ipVPDASFQKy9LQ6BWXpZGOyGirT6/uxTo53fntz2/fP35n5oOCIFaeVkaArXysjTaCdFsNb0D/zeLx0AfnLw0P+XByQ9NB4RArbwsDYFaeVka7YRotrp38tLySaR7Jz+an/LxUqS3PyAEauVlaQjUysvSaCdEstXH07vvC4E+ent51339pPw6H2mZClT8SUII2XMMAp0/4IlACSF/cjEI9N7s8c6RQE0vZOIuvJeXpXEX3srL0mgnRLDVg/nz71feAlUPCIFaeVkaArXysjTaCbm5rT6/O3cmAtVo/JZagVka4zl5WdrBCPTByTrTe+08C39DGr+lVmCWxnhOXpZ2oAJdvf6T14Fek8ZvqRWYpTGek5elHYxAl1neZ+edSDek8VtqBWZpjOfkZWkHKtBHb5+8wHvhb0Djt9QKzNIYz8nL0g5UoOdf8GlMN6LxW2oFZmmM5+RlaYcq0PMv3pn68zXT7U8E6uZlaQjUysvSaCeET6TvsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqH6g8IIAACAASURBVJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOCALtsWPJy9IQqJWXpdFOyG5bPfzJX364/uKT7/yH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1MrL0mgn5Oa2evT2yY9m/53e9Jz+9/O7c41++fri9qjhgBColZelIVArL0ujnZCb2+rL15d31++d/PD8/MHJS/MvHsy+sBwQArXysjQEauVlabQTcgtbzQV6b3FzdHq//iXTASFQKy9LQ6BWXpZGOyG6reb32h+9vbzr/vnd7QdBP9IyFejuk8XzI4QQW2wCnd95Twm00CohhCTjEujH85cxDQRqeiHT7rvwe7xj3+OeRMnL0rgLb+VlabQTonrp47vPzx78vOQWqHpACNTKy9IQqJWXpdFOiOilB8uX0SPQm9L4LbUCszTGc/KytIMS6G9OVi/7DD0Lj0BVXpaGQK28LI12QhQvPbp38sLqAc/V6z/3/DpQBKrysjQEauVlabQTonjp3uB9m6F3IiFQlZelIVArL0ujnRDBSw+G73t/9PbJC4H3wiNQlZelIVArL0ujnRDlrZwnq8we9vwi8mlMCFTlZWkI1MrL0mgn5OZe+vhkQ6DnX7wz/dNrptufCNTNy9IQqJWXpdFOyJF8Ij0CVXlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02glBoD12LHlZGgK18rI02gk5SIGObYlAVV6WhkCtvCyNdkIOUaA7bIlAVV6WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkKOQ6C7nOpKjx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12Qo5CoLucakuPHUteloZArbwsjXZCjkGgO2+U2tJjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo50QBNpjx5KXpSFQKy9Lo52QgxXowJgI9Ba8LA2BWnlZGu2E7E+gH2lZ2HL2n+2TCCHkMScmUDHLm5sTboF6eFkat0CtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIQaI8dS16WhkCtvCyNdkIOX6CTCQK9BS9LQ6BWXpZGOyEHL9AJAr0VL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IQi0x44lL0tDoFZelkY7IYct0Mkg+wL22LHkZWkI1MrL0mgn5KAFOkGgt+ZlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCcEgfbYseRlaQjUysvSaCfkQAU6QaAmXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhBojx1LXpaGQK28LI12QhDo8e942aVz/O0uB2ZpKMbJy9IQ6J5y9DteeukcfbsrgFkainHysjQEuqcc/Y4INEZDMU5eloZA95Sj3xGBxmgoxsnL0hDonnL0OyLQGA3FOHlZGgLdU45+RwQao6EYJy9LQ6B7ytHviEBjNBTj5GVpCHRPOfodEWiMhmKcvCwNge4pR78jAo3RUIyTl6Uh0D3l6HdEoDEainHysjQEuqcc/Y4INEZDMU5eloZA95Sj3xGBxmgoxsnL0hDonnL0OyLQGA3FOHlZ2p+eQLeyL+ClF6wduz+B7r6QHsdv6cZhzI9qb/s9nivhqsyg1F76XbRbLrwHxoDWWaCTyUdbX5suTAR62Y5+7N4EWlxIj8EwG4ex5/0ei0BXZQal9tNv3W618B4YA1pjgU62BOr7hUSgCNQXBOrlDc4egd4mCBSBlkGgqSBQKy/IQqAItAwCTQWBWnlBFgJFoGUQaCoI1MoLshAoAi2DQFNBoFZekIVAEWgZBJoKArXygiwEikDLINBUEKiVF2QhUARaBoGmgkCtvCALgSLQMgg0FQRq5QVZCBSBlkGgqSBQKy/IQqAItAwCTQWBWnlBFgK9qnD1HaNr8+g7PpqdNjp9sjj14myve4Fv8Ua0lgKd88/n7ZaHsTqUYxPo4LhHp+1VoMtz2DifgxHoDa8D1+QpP7R59brBjyHQS4+0+o6NU3d/z87fzYGTVr/Y17uktnnb/7+lQNfsjz6arI9m+L+ORqADN+6Q4x4FugRODlKgN7wOXJcn/MzW1esmP4dAr/6p3advftOub0GghiNAoLcEI9Crg0CvDAK9aRCoLwh0VxDoJefsORtfEOhNg0B9QaC7gkAvOWfP2fiCQG8aBOoLAt0VBHrJOXvOxhcEetMgUF8Q6K4g0EvO2XM2viDQmwaB+oJAdwWBXnLOtz6HR+/cPTl57V3DscyDQG8aBOoLAt0VBHrJOd/2DL58/WSWb/7WcTTnCPTmQaC+INBdQaCXnPNtz+DeyYvvnn/x9smLf3AcDgK9eRCoLwh0VxDoJed8y5///O78tueXrz//U8fhINCbB4H6gkB3BYFecs63/PkHJy8t//vD2x/MLAj0pkGgviDQXUGgl5zzLX/+3smP5v/9eCnSWweB3jQI1BcEuisI9JJzvt2PP3p7edf987vbD4J+pKUWKCGEuCIKCoESQsihCdT1QqbOn+tKOzcwS2M8Jy9L2xNuf7dA1bCjlZelIVArL0ujnRAE2mPHkpelIVArL0ujnZCDexaeHb28LA2BWnlZGu2E3P51oD/c+O/tw45WXpaGQK28LI12Qg7unUjs6OVlaQjUysvSaCfktgJ99PbJC9b3wrOjl5elIVArL0ujnZBbvx7/C/OnMbGjl5elIVArL0ujnZDbv6Hpi3em/nzNdfuTHc28LA2BWnlZGu2E7PfttUrY0crL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hColZel0U4IAu2xY8nL0hCos4rFTQAABvpJREFUlZel0U7I4QmUEEKOJAiUEELEIFBCCBGDQAkhRAwCJYQQMQiUEELEIFBCCBGDQAkhRAwCJYQQMQiUEELEIFBCCBGDQAkhRAwCJYQQMQiUEELEIFBCCBGDQAkhRMyBCfTRO3dPTl5793Efhilfvv7S8k8bveovjie//+uTk+evLnSk7c5//1fTev/1D4sv+tWb5vO7Ly7qdWv35esn83zzt7Ov9t7usAS6LL/ofvy5d7IU6Eav+ovjyW8Wv6TP/3T2Rbt25w8W9V64otGx1pvm0dsnC4G2a/f53YFA99/usAR67+TFd8+/WG175Hl072Ql0I1e9RdHk49Pnv/b89lhz3//urWbXgfn9f5qMV+7erNM/4pYHHW7dh+vrnSz7L/dQQn0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" width="672" />
+##(Data selection and Test start) ##Ensure Value and SurveyYear are
+numeric</p>
+<pre class="r"><code>access_healthcare$Value &lt;- as.numeric(as.character(access_healthcare$Value))
+child_mortality$Value &lt;- as.numeric(as.character(child_mortality$Value))
+maternal_mortality$Value &lt;- as.numeric(as.character(maternal_mortality$Value))
+immunization$Value &lt;- as.numeric(as.character(immunization$Value))
+
+access_healthcare$SurveyYear &lt;- as.numeric(as.character(access_healthcare$SurveyYear))
+child_mortality$SurveyYear &lt;- as.numeric(as.character(child_mortality$SurveyYear))
+maternal_mortality$SurveyYear &lt;- as.numeric(as.character(maternal_mortality$SurveyYear))
+immunization$SurveyYear &lt;- as.numeric(as.character(immunization$SurveyYear))</code></pre>
+<p>##Structure summaries</p>
+<pre class="r"><code>str(access_healthcare)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    275 obs. of  26 variables:
+##  $ ISO3                  : chr  &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; ...
+##  $ DataId                : chr  &quot;751751&quot; &quot;567476&quot; &quot;205488&quot; &quot;751748&quot; ...
+##  $ Indicator             : chr  &quot;Antenatal care provider: Doctor&quot; &quot;Antenatal care provider: Doctor&quot; &quot;Antenatal care provider: Doctor&quot; &quot;Antenatal care provider: Nurse/midwife&quot; ...
+##  $ Value                 : num  28.5 30 27.3 66.6 65 68.4 0.1 0.1 0.1 0.6 ...
+##  $ Precision             : num  1 1 1 1 1 1 1 1 1 1 ...
+##  $ DHS_CountryCode       : chr  &quot;ZA&quot; &quot;ZA&quot; &quot;ZA&quot; &quot;ZA&quot; ...
+##  $ CountryName           : chr  &quot;South Africa&quot; &quot;South Africa&quot; &quot;South Africa&quot; &quot;South Africa&quot; ...
+##  $ SurveyYear            : num  1998 1998 1998 1998 1998 ...
+##  $ SurveyId              : chr  &quot;ZA1998DHS&quot; &quot;ZA1998DHS&quot; &quot;ZA1998DHS&quot; &quot;ZA1998DHS&quot; ...
+##  $ IndicatorId           : chr  &quot;RH_ANCP_W_DOC&quot; &quot;RH_ANCP_W_DOC&quot; &quot;RH_ANCP_W_DOC&quot; &quot;RH_ANCP_W_NRS&quot; ...
+##  $ IndicatorOrder        : int  83363010 83363010 83363010 83363020 83363020 83363020 83363070 83363070 83363070 83363080 ...
+##  $ IndicatorType         : chr  &quot;I&quot; &quot;I&quot; &quot;I&quot; &quot;I&quot; ...
+##  $ CharacteristicId      : chr  &quot;1000&quot; &quot;1000&quot; &quot;1000&quot; &quot;1000&quot; ...
+##  $ CharacteristicOrder   : int  0 0 0 0 0 0 0 0 0 0 ...
+##  $ CharacteristicCategory: chr  &quot;Total&quot; &quot;Total&quot; &quot;Total&quot; &quot;Total&quot; ...
+##  $ CharacteristicLabel   : chr  &quot;Total&quot; &quot;Total&quot; &quot;Total&quot; &quot;Total&quot; ...
+##  $ ByVariableId          : chr  &quot;14000&quot; &quot;14001&quot; &quot;14002&quot; &quot;14000&quot; ...
+##  $ ByVariableLabel       : chr  &quot;Three years preceding the survey&quot; &quot;Five years preceding the survey&quot; &quot;Two years preceding the survey&quot; &quot;Three years preceding the survey&quot; ...
+##  $ IsTotal               : int  1 1 1 1 1 1 1 1 1 1 ...
+##  $ IsPreferred           : int  0 0 1 0 0 1 0 0 1 0 ...
+##  $ SDRID                 : chr  &quot;RHANCPWDOC&quot; &quot;RHANCPWDOC&quot; &quot;RHANCPWDOC&quot; &quot;RHANCPWNRS&quot; ...
+##  $ SurveyType            : chr  &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; ...
+##  $ DenominatorWeighted   : int  2871 4122 2010 2871 4122 2010 2871 4122 2010 2871 ...
+##  $ DenominatorUnweighted : int  2903 4148 2041 2903 4148 2041 2903 4148 2041 2903 ...
+##  $ CILow                 : logi  NA NA NA NA NA NA ...
+##  $ CIHigh                : logi  NA NA NA NA NA NA ...</code></pre>
+<pre class="r"><code>str(child_mortality)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    40 obs. of  26 variables:
+##  $ ISO3                  : chr  &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; ...
+##  $ DataId                : chr  &quot;85995&quot; &quot;794581&quot; &quot;785930&quot; &quot;56239&quot; ...
+##  $ Indicator             : chr  &quot;Neonatal mortality rate (5 year periods)&quot; &quot;Postneonatal mortality (5 year periods)&quot; &quot;Infant mortality rate (5 year periods)&quot; &quot;Child mortality (5 year periods)&quot; ...
+##  $ Value                 : num  20 26 45 15 59 20 19 26 23 45 ...
+##  $ Precision             : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ DHS_CountryCode       : chr  &quot;ZA&quot; &quot;ZA&quot; &quot;ZA&quot; &quot;ZA&quot; ...
+##  $ CountryName           : chr  &quot;South Africa&quot; &quot;South Africa&quot; &quot;South Africa&quot; &quot;South Africa&quot; ...
+##  $ SurveyYear            : num  1998 1998 1998 1998 1998 ...
+##  $ SurveyId              : chr  &quot;ZA1998DHS&quot; &quot;ZA1998DHS&quot; &quot;ZA1998DHS&quot; &quot;ZA1998DHS&quot; ...
+##  $ IndicatorId           : chr  &quot;CM_ECMT_C_NNR&quot; &quot;CM_ECMT_C_PNR&quot; &quot;CM_ECMT_C_IMR&quot; &quot;CM_ECMT_C_CMR&quot; ...
+##  $ IndicatorOrder        : int  63166010 63166020 63166030 63166040 63166050 63206010 63206010 63206020 63206020 63206030 ...
+##  $ IndicatorType         : chr  &quot;I&quot; &quot;I&quot; &quot;I&quot; &quot;I&quot; ...
+##  $ CharacteristicId      : chr  &quot;13000&quot; &quot;13000&quot; &quot;13000&quot; &quot;13000&quot; ...
+##  $ CharacteristicOrder   : int  80000 80000 80000 80000 80000 0 0 0 0 0 ...
+##  $ CharacteristicCategory: chr  &quot;Five year periods&quot; &quot;Five year periods&quot; &quot;Five year periods&quot; &quot;Five year periods&quot; ...
+##  $ CharacteristicLabel   : chr  &quot;0-4&quot; &quot;0-4&quot; &quot;0-4&quot; &quot;0-4&quot; ...
+##  $ ByVariableId          : chr  &quot;0&quot; &quot;0&quot; &quot;0&quot; &quot;0&quot; ...
+##  $ ByVariableLabel       : chr  &quot;Unknown&quot; &quot;Unknown&quot; &quot;Unknown&quot; &quot;Unknown&quot; ...
+##  $ IsTotal               : int  1 1 1 1 1 1 1 1 1 1 ...
+##  $ IsPreferred           : int  1 1 1 1 1 1 0 1 0 1 ...
+##  $ SDRID                 : chr  &quot;CMECMTCNNR&quot; &quot;CMECMTCPNR&quot; &quot;CMECMTCIMR&quot; &quot;CMECMTCCMR&quot; ...
+##  $ SurveyType            : chr  &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; ...
+##  $ DenominatorWeighted   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ DenominatorUnweighted : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ CILow                 : int  15 20 38 9 50 15 16 20 19 38 ...
+##  $ CIHigh                : int  25 31 53 20 68 25 23 31 27 53 ...</code></pre>
+<pre class="r"><code>str(maternal_mortality)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    21 obs. of  26 variables:
+##  $ ISO3                  : chr  &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; ...
+##  $ DataId                : chr  &quot;91409&quot; &quot;91377&quot; &quot;768646&quot; &quot;768647&quot; ...
+##  $ Indicator             : chr  &quot;Female deaths that are pregnancy-related&quot; &quot;Number of pregnancy-related deaths&quot; &quot;Years of exposure to the risk of mortality for women&quot; &quot;Years of exposure to the risk of mortality for women (unweighted)&quot; ...
+##  $ Value                 : num  5.50 1.90e+01 1.23e+05 1.24e+05 1.50e-01 ...
+##  $ Precision             : num  1 0 0 0 2 0 0 0 0 3 ...
+##  $ DHS_CountryCode       : chr  &quot;ZA&quot; &quot;ZA&quot; &quot;ZA&quot; &quot;ZA&quot; ...
+##  $ CountryName           : chr  &quot;South Africa&quot; &quot;South Africa&quot; &quot;South Africa&quot; &quot;South Africa&quot; ...
+##  $ SurveyYear            : num  1998 1998 1998 1998 1998 ...
+##  $ SurveyId              : chr  &quot;ZA1998DHS&quot; &quot;ZA1998DHS&quot; &quot;ZA1998DHS&quot; &quot;ZA1998DHS&quot; ...
+##  $ IndicatorId           : chr  &quot;MM_MMRT_W_FDP&quot; &quot;MM_MMRT_W_PDT&quot; &quot;MM_MMRT_W_EXP&quot; &quot;MM_MMRT_W_EXU&quot; ...
+##  $ IndicatorOrder        : int  77003010 77003020 77003030 77003040 77003050 77033010 77033020 77033030 77033040 77033050 ...
+##  $ IndicatorType         : chr  &quot;I&quot; &quot;N&quot; &quot;D&quot; &quot;U&quot; ...
+##  $ CharacteristicId      : chr  &quot;10000&quot; &quot;10000&quot; &quot;10000&quot; &quot;10000&quot; ...
+##  $ CharacteristicOrder   : int  10000 10000 10000 10000 10000 0 0 0 0 0 ...
+##  $ CharacteristicCategory: chr  &quot;Total 15-49&quot; &quot;Total 15-49&quot; &quot;Total 15-49&quot; &quot;Total 15-49&quot; ...
+##  $ CharacteristicLabel   : chr  &quot;Total 15-49&quot; &quot;Total 15-49&quot; &quot;Total 15-49&quot; &quot;Total 15-49&quot; ...
+##  $ ByVariableId          : chr  &quot;0&quot; &quot;0&quot; &quot;0&quot; &quot;0&quot; ...
+##  $ ByVariableLabel       : chr  &quot;Unknown&quot; &quot;Unknown&quot; &quot;Unknown&quot; &quot;Unknown&quot; ...
+##  $ IsTotal               : int  1 1 1 1 1 1 1 1 1 1 ...
+##  $ IsPreferred           : int  1 1 1 1 1 1 1 1 1 1 ...
+##  $ SDRID                 : chr  &quot;MMMMRTWFDP&quot; &quot;MMMMRTWPDT&quot; &quot;MMMMRTWEXP&quot; &quot;MMMMRTWEXU&quot; ...
+##  $ SurveyType            : chr  &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; ...
+##  $ DenominatorWeighted   : int  NA NA NA NA 122701 NA NA NA NA NA ...
+##  $ DenominatorUnweighted : int  NA NA 123738 123738 123738 NA NA NA NA NA ...
+##  $ CILow                 : int  NA NA NA NA NA NA 77 NA NA NA ...
+##  $ CIHigh                : int  NA NA NA NA NA NA 223 NA NA NA ...</code></pre>
+<pre class="r"><code>str(immunization)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    116 obs. of  26 variables:
+##  $ ISO3                  : chr  &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; &quot;ZAF&quot; ...
+##  $ DataId                : chr  &quot;330965&quot; &quot;139796&quot; &quot;330966&quot; &quot;139797&quot; ...
+##  $ Indicator             : chr  &quot;BCG vaccination received&quot; &quot;BCG vaccination received&quot; &quot;DPT 1 vaccination received&quot; &quot;DPT 1 vaccination received&quot; ...
+##  $ Value                 : num  96.8 94.9 93.3 93.1 86.2 82.4 76.4 73.8 91.2 87.7 ...
+##  $ Precision             : num  1 1 1 1 1 1 1 1 1 1 ...
+##  $ DHS_CountryCode       : chr  &quot;ZA&quot; &quot;ZA&quot; &quot;ZA&quot; &quot;ZA&quot; ...
+##  $ CountryName           : chr  &quot;South Africa&quot; &quot;South Africa&quot; &quot;South Africa&quot; &quot;South Africa&quot; ...
+##  $ SurveyYear            : num  1998 1998 1998 1998 1998 ...
+##  $ SurveyId              : chr  &quot;ZA1998DHS&quot; &quot;ZA1998DHS&quot; &quot;ZA1998DHS&quot; &quot;ZA1998DHS&quot; ...
+##  $ IndicatorId           : chr  &quot;CH_VACS_C_BCG&quot; &quot;CH_VACS_C_BCG&quot; &quot;CH_VACS_C_DP1&quot; &quot;CH_VACS_C_DP1&quot; ...
+##  $ IndicatorOrder        : int  93886010 93886010 93886020 93886020 93886030 93886030 93886040 93886040 93886050 93886050 ...
+##  $ IndicatorType         : chr  &quot;I&quot; &quot;I&quot; &quot;I&quot; &quot;I&quot; ...
+##  $ CharacteristicId      : chr  &quot;268002&quot; &quot;268002&quot; &quot;268002&quot; &quot;268002&quot; ...
+##  $ CharacteristicOrder   : int  268002 268002 268002 268002 268002 268002 268002 268002 268002 268002 ...
+##  $ CharacteristicCategory: chr  &quot;Source of vaccination information&quot; &quot;Source of vaccination information&quot; &quot;Source of vaccination information&quot; &quot;Source of vaccination information&quot; ...
+##  $ CharacteristicLabel   : chr  &quot;Either source&quot; &quot;Either source&quot; &quot;Either source&quot; &quot;Either source&quot; ...
+##  $ ByVariableId          : chr  &quot;258001&quot; &quot;258002&quot; &quot;258001&quot; &quot;258002&quot; ...
+##  $ ByVariableLabel       : chr  &quot;12-23&quot; &quot;24-35&quot; &quot;12-23&quot; &quot;24-35&quot; ...
+##  $ IsTotal               : int  1 1 1 1 1 1 1 1 1 1 ...
+##  $ IsPreferred           : int  1 0 1 0 1 0 1 0 1 0 ...
+##  $ SDRID                 : chr  &quot;CHVACSCBCG&quot; &quot;CHVACSCBCG&quot; &quot;CHVACSCDP1&quot; &quot;CHVACSCDP1&quot; ...
+##  $ SurveyType            : chr  &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; &quot;DHS&quot; ...
+##  $ DenominatorWeighted   : int  973 933 973 933 973 933 973 933 973 933 ...
+##  $ DenominatorUnweighted : int  971 951 971 951 971 951 971 951 971 951 ...
+##  $ CILow                 : logi  NA NA NA NA NA NA ...
+##  $ CIHigh                : logi  NA NA NA NA NA NA ...</code></pre>
+<p>##Summary statistics</p>
+<pre class="r"><code>summary(access_healthcare$Value)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##     0.0     7.6    67.6   542.7   100.0  5066.0</code></pre>
+<pre class="r"><code>summary(child_mortality$Value)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    7.00   19.75   35.00  466.85   52.50 5183.00</code></pre>
+<pre class="r"><code>summary(maternal_mortality$Value)</code></pre>
+<pre><code>##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+##      0.0      7.8     97.0  17881.5    536.0 123738.0</code></pre>
+<pre class="r"><code>summary(immunization$Value)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    2.20   65.60   82.55  234.95   91.25 3761.00</code></pre>
+<pre class="r"><code>summary(access_healthcare$SurveyYear)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    1998    1998    2016    2008    2016    2016</code></pre>
+<pre class="r"><code>summary(child_mortality$SurveyYear)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    1998    1998    2007    2007    2016    2016</code></pre>
+<pre class="r"><code>summary(maternal_mortality$SurveyYear)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    1998    1998    2016    2007    2016    2016</code></pre>
+<pre class="r"><code>summary(immunization$SurveyYear)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    1998    1998    2016    2008    2016    2016</code></pre>
+<p>##Missing values</p>
+<pre class="r"><code>cat(&quot;Missing Values in Value:\nAccess to Healthcare:&quot;, sum(is.na(access_healthcare$Value)), 
+    &quot;\nChild Mortality:&quot;, sum(is.na(child_mortality$Value)), 
+    &quot;\nMaternal Mortality:&quot;, sum(is.na(maternal_mortality$Value)), 
+    &quot;\nImmunization:&quot;, sum(is.na(immunization$Value)), &quot;\n&quot;)</code></pre>
+<pre><code>## Missing Values in Value:
+## Access to Healthcare: 0 
+## Child Mortality: 0 
+## Maternal Mortality: 0 
+## Immunization: 0</code></pre>
+<p>##BCG vaccination vs. under-five mortality ```{bcg-under 5
+Mortality(u5m)} bcg_data &lt;- immunization %&gt;% filter(Indicator ==
+“BCG vaccination received” &amp; !is.na(Value)) %&gt;%
+select(SurveyYear, Value)</p>
+<p>u5m_data &lt;- child_mortality %&gt;% filter(Indicator == “Under-five
+mortality rate (5 year periods)” &amp; !is.na(Value)) %&gt;%
+select(SurveyYear, Value)</p>
+<p>merged_specific &lt;- merge(bcg_data, u5m_data, by = “SurveyYear”,
+suffixes = c(“_bcg”, “_u5m”))</p>
+<p>if (nrow(merged_specific) &gt;= 2) { cor_test &lt;-
+cor.test(merged_specific<span class="math inline">\(Value_bcg,
+merged_specific\)</span>Value_u5m) print(cor_test) } else { cat(“No data
+to compare and test”) }</p>
+<pre><code>## t-test: Child mortality (1998 vs. 2016)
+
+``` r
+group1 &lt;- child_mortality %&gt;% 
+  filter(SurveyYear == 1998 &amp; !is.na(Value)) %&gt;% 
+  pull(Value)
+
+group2 &lt;- child_mortality %&gt;% 
+  filter(SurveyYear == 2016 &amp; !is.na(Value)) %&gt;% 
+  pull(Value)
+
+if (length(group1) &gt; 0 &amp;&amp; length(group2) &gt; 0) {
+  t_test &lt;- t.test(group1, group2)
+  print(t_test)
+} else {
+  cat(&quot;Not enough valid data for t-test on child mortality.\n&quot;)
+}</code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  group1 and group2
+## t = 0.39297, df = 33.825, p-value = 0.6968
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -701.8154 1038.2154
+## sample estimates:
+## mean of x mean of y 
+##    550.95    382.75</code></pre>
+</div>
+<div id="t-test-access-to-healthcare-1998-vs.-2016" class="section level2">
+<h2>t-test: Access to healthcare (1998 vs. 2016)</h2>
+<pre class="r"><code>group1_access &lt;- access_healthcare %&gt;% 
+  filter(SurveyYear == 1998 &amp; !is.na(Value)) %&gt;% 
+  pull(Value)
+
+group2_access &lt;- access_healthcare %&gt;% 
+  filter(SurveyYear == 2016 &amp; !is.na(Value)) %&gt;% 
+  pull(Value)
+
+if (length(group1_access) &gt; 0 &amp;&amp; length(group2_access) &gt; 0) {
+  t_test_access &lt;- t.test(group1_access, group2_access)
+  print(t_test_access)
+} else {
+  cat(&quot;Not enough valid data for t-test on access to healthcare.\n&quot;)
+}</code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  group1_access and group2_access
+## t = 1.4741, df = 217.13, p-value = 0.1419
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -69.48121 481.72552
+## sample estimates:
+## mean of x mean of y 
+##  652.8398  446.7177</code></pre>
+</div>
+<div id="data-selection-and-test-end" class="section level2">
+<h2>1 (Data selection and test end)</h2>
+</div>
+<div id="attribute-feature-selection" class="section level2">
+<h2>Attribute/ Feature Selection</h2>
+</div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>This report analyses the datasets provided for BIN371 Project
+Milestone 2 with the aim of assessing feature usability for modelling
+and uncovering meaningful health-related patterns. The project
+investigates the link between healthcare access and maternal and child
+health outcomes in South Africa, using publicly available national-level
+data. The overall objective is to provide evidence-based insights that
+support better decision-making in public health policy and service
+delivery.</p>
+<p>To support these goals, the report evaluates four key datasets:
+Access to Health Care, Child Mortality, Maternal Mortality, and
+Immunization. These datasets, which span surveys conducted between 1998
+and 2016, include indicators such as place of delivery, type of birth
+assistance, immunisation rates, and mortality statistics. The CRISP-DM
+methodology is used as a structured framework for analysis, starting
+with business understanding and data exploration before moving into
+modelling and evaluation.</p>
+</div>
+<div id="load-datasets" class="section level2">
+<h2>Load datasets</h2>
+<pre class="r"><code>immunization &lt;- read.csv(&quot;immunization_national_zaf.csv&quot;)
+maternal_mortality &lt;- read.csv(&quot;maternal-mortality_national_zaf.csv&quot;)
+access_healthcare &lt;- read.csv(&quot;access-to-health-care_national_zaf.csv&quot;)
+child_mortality &lt;- read.csv(&quot;child-mortality-rates_national_zaf.csv&quot;)</code></pre>
+</div>
+<div id="finding-the-missing-value-analysis" class="section level2">
+<h2>Finding the Missing Value Analysis</h2>
+<pre class="r"><code>missing_percentage &lt;- function(df){
+  data.frame(
+    Feature = colnames(df),
+    MissingPercent = colSums(is.na(df)) / nrow(df) * 100  
+  )
+}
+
+missing_access &lt;- missing_percentage(access_healthcare) %&gt;% mutate(Dataset = &quot;Access_Healthcare&quot;)
+missing_maternal &lt;- missing_percentage(maternal_mortality) %&gt;% mutate(Dataset = &quot;Maternal_Mortality&quot;)
+missing_immunization &lt;- missing_percentage(immunization) %&gt;% mutate(Dataset = &quot;Immunization&quot;)
+missing_child &lt;- missing_percentage(child_mortality) %&gt;% mutate(Dataset = &quot;Child_Mortality&quot;)
+
+missing_summary &lt;- bind_rows(missing_access, missing_maternal, missing_immunization, missing_child)
+
+kable(missing_summary, caption = &quot;Percentage of Missing Values per Feature&quot;)</code></pre>
+<table>
+<caption>Percentage of Missing Values per Feature</caption>
+<colgroup>
+<col width="33%" />
+<col width="26%" />
+<col width="17%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="left">Feature</th>
+<th align="right">MissingPercent</th>
+<th align="left">Dataset</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">ISO3…1</td>
+<td align="left">ISO3</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">DataId…2</td>
+<td align="left">DataId</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="odd">
+<td align="left">Indicator…3</td>
+<td align="left">Indicator</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">Value…4</td>
+<td align="left">Value</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="odd">
+<td align="left">Precision…5</td>
+<td align="left">Precision</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">DHS_CountryCode…6</td>
+<td align="left">DHS_CountryCode</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="odd">
+<td align="left">CountryName…7</td>
+<td align="left">CountryName</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyYear…8</td>
+<td align="left">SurveyYear</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyId…9</td>
+<td align="left">SurveyId</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">IndicatorId…10</td>
+<td align="left">IndicatorId</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="odd">
+<td align="left">IndicatorOrder…11</td>
+<td align="left">IndicatorOrder</td>
+<td align="right">0.3623188</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">IndicatorType…12</td>
+<td align="left">IndicatorType</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicId…13</td>
+<td align="left">CharacteristicId</td>
+<td align="right">0.3623188</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicOrder…14</td>
+<td align="left">CharacteristicOrder</td>
+<td align="right">0.3623188</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicCategory…15</td>
+<td align="left">CharacteristicCategory</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicLabel…16</td>
+<td align="left">CharacteristicLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="odd">
+<td align="left">ByVariableId…17</td>
+<td align="left">ByVariableId</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">ByVariableLabel…18</td>
+<td align="left">ByVariableLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="odd">
+<td align="left">IsTotal…19</td>
+<td align="left">IsTotal</td>
+<td align="right">0.3623188</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">IsPreferred…20</td>
+<td align="left">IsPreferred</td>
+<td align="right">0.3623188</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="odd">
+<td align="left">SDRID…21</td>
+<td align="left">SDRID</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">RegionId…22</td>
+<td align="left">RegionId</td>
+<td align="right">100.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyYearLabel…23</td>
+<td align="left">SurveyYearLabel</td>
+<td align="right">0.3623188</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyType…24</td>
+<td align="left">SurveyType</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="odd">
+<td align="left">DenominatorWeighted…25</td>
+<td align="left">DenominatorWeighted</td>
+<td align="right">12.6811594</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">DenominatorUnweighted…26</td>
+<td align="left">DenominatorUnweighted</td>
+<td align="right">12.6811594</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="odd">
+<td align="left">CILow…27</td>
+<td align="left">CILow</td>
+<td align="right">100.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">CIHigh…28</td>
+<td align="left">CIHigh</td>
+<td align="right">100.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="odd">
+<td align="left">LevelRank…29</td>
+<td align="left">LevelRank</td>
+<td align="right">100.0000000</td>
+<td align="left">Access_Healthcare</td>
+</tr>
+<tr class="even">
+<td align="left">ISO3…30</td>
+<td align="left">ISO3</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">DataId…31</td>
+<td align="left">DataId</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">Indicator…32</td>
+<td align="left">Indicator</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">Value…33</td>
+<td align="left">Value</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">Precision…34</td>
+<td align="left">Precision</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">DHS_CountryCode…35</td>
+<td align="left">DHS_CountryCode</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">CountryName…36</td>
+<td align="left">CountryName</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyYear…37</td>
+<td align="left">SurveyYear</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyId…38</td>
+<td align="left">SurveyId</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">IndicatorId…39</td>
+<td align="left">IndicatorId</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">IndicatorOrder…40</td>
+<td align="left">IndicatorOrder</td>
+<td align="right">4.5454545</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">IndicatorType…41</td>
+<td align="left">IndicatorType</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicId…42</td>
+<td align="left">CharacteristicId</td>
+<td align="right">4.5454545</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicOrder…43</td>
+<td align="left">CharacteristicOrder</td>
+<td align="right">4.5454545</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicCategory…44</td>
+<td align="left">CharacteristicCategory</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicLabel…45</td>
+<td align="left">CharacteristicLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">ByVariableId…46</td>
+<td align="left">ByVariableId</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">ByVariableLabel…47</td>
+<td align="left">ByVariableLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">IsTotal…48</td>
+<td align="left">IsTotal</td>
+<td align="right">4.5454545</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">IsPreferred…49</td>
+<td align="left">IsPreferred</td>
+<td align="right">4.5454545</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">SDRID…50</td>
+<td align="left">SDRID</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">RegionId…51</td>
+<td align="left">RegionId</td>
+<td align="right">100.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyYearLabel…52</td>
+<td align="left">SurveyYearLabel</td>
+<td align="right">4.5454545</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyType…53</td>
+<td align="left">SurveyType</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">DenominatorWeighted…54</td>
+<td align="left">DenominatorWeighted</td>
+<td align="right">90.9090909</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">DenominatorUnweighted…55</td>
+<td align="left">DenominatorUnweighted</td>
+<td align="right">72.7272727</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">CILow…56</td>
+<td align="left">CILow</td>
+<td align="right">86.3636364</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">CIHigh…57</td>
+<td align="left">CIHigh</td>
+<td align="right">86.3636364</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">LevelRank…58</td>
+<td align="left">LevelRank</td>
+<td align="right">100.0000000</td>
+<td align="left">Maternal_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">ISO3…59</td>
+<td align="left">ISO3</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">DataId…60</td>
+<td align="left">DataId</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="odd">
+<td align="left">Indicator…61</td>
+<td align="left">Indicator</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">Value…62</td>
+<td align="left">Value</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="odd">
+<td align="left">Precision…63</td>
+<td align="left">Precision</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">DHS_CountryCode…64</td>
+<td align="left">DHS_CountryCode</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="odd">
+<td align="left">CountryName…65</td>
+<td align="left">CountryName</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyYear…66</td>
+<td align="left">SurveyYear</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyId…67</td>
+<td align="left">SurveyId</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">IndicatorId…68</td>
+<td align="left">IndicatorId</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="odd">
+<td align="left">IndicatorOrder…69</td>
+<td align="left">IndicatorOrder</td>
+<td align="right">0.8547009</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">IndicatorType…70</td>
+<td align="left">IndicatorType</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicId…71</td>
+<td align="left">CharacteristicId</td>
+<td align="right">0.8547009</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicOrder…72</td>
+<td align="left">CharacteristicOrder</td>
+<td align="right">0.8547009</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicCategory…73</td>
+<td align="left">CharacteristicCategory</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicLabel…74</td>
+<td align="left">CharacteristicLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="odd">
+<td align="left">ByVariableId…75</td>
+<td align="left">ByVariableId</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">ByVariableLabel…76</td>
+<td align="left">ByVariableLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="odd">
+<td align="left">IsTotal…77</td>
+<td align="left">IsTotal</td>
+<td align="right">0.8547009</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">IsPreferred…78</td>
+<td align="left">IsPreferred</td>
+<td align="right">0.8547009</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="odd">
+<td align="left">SDRID…79</td>
+<td align="left">SDRID</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">RegionId…80</td>
+<td align="left">RegionId</td>
+<td align="right">100.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyYearLabel…81</td>
+<td align="left">SurveyYearLabel</td>
+<td align="right">0.8547009</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyType…82</td>
+<td align="left">SurveyType</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="odd">
+<td align="left">DenominatorWeighted…83</td>
+<td align="left">DenominatorWeighted</td>
+<td align="right">7.6923077</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">DenominatorUnweighted…84</td>
+<td align="left">DenominatorUnweighted</td>
+<td align="right">7.6923077</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="odd">
+<td align="left">CILow…85</td>
+<td align="left">CILow</td>
+<td align="right">100.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">CIHigh…86</td>
+<td align="left">CIHigh</td>
+<td align="right">100.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="odd">
+<td align="left">LevelRank…87</td>
+<td align="left">LevelRank</td>
+<td align="right">100.0000000</td>
+<td align="left">Immunization</td>
+</tr>
+<tr class="even">
+<td align="left">ISO3…88</td>
+<td align="left">ISO3</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">DataId…89</td>
+<td align="left">DataId</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">Indicator…90</td>
+<td align="left">Indicator</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">Value…91</td>
+<td align="left">Value</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">Precision…92</td>
+<td align="left">Precision</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">DHS_CountryCode…93</td>
+<td align="left">DHS_CountryCode</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">CountryName…94</td>
+<td align="left">CountryName</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyYear…95</td>
+<td align="left">SurveyYear</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyId…96</td>
+<td align="left">SurveyId</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">IndicatorId…97</td>
+<td align="left">IndicatorId</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">IndicatorOrder…98</td>
+<td align="left">IndicatorOrder</td>
+<td align="right">2.4390244</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">IndicatorType…99</td>
+<td align="left">IndicatorType</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicId…100</td>
+<td align="left">CharacteristicId</td>
+<td align="right">2.4390244</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicOrder…101</td>
+<td align="left">CharacteristicOrder</td>
+<td align="right">2.4390244</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicCategory…102</td>
+<td align="left">CharacteristicCategory</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicLabel…103</td>
+<td align="left">CharacteristicLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">ByVariableId…104</td>
+<td align="left">ByVariableId</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">ByVariableLabel…105</td>
+<td align="left">ByVariableLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">IsTotal…106</td>
+<td align="left">IsTotal</td>
+<td align="right">2.4390244</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">IsPreferred…107</td>
+<td align="left">IsPreferred</td>
+<td align="right">2.4390244</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">SDRID…108</td>
+<td align="left">SDRID</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">RegionId…109</td>
+<td align="left">RegionId</td>
+<td align="right">100.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyYearLabel…110</td>
+<td align="left">SurveyYearLabel</td>
+<td align="right">2.4390244</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyType…111</td>
+<td align="left">SurveyType</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">DenominatorWeighted…112</td>
+<td align="left">DenominatorWeighted</td>
+<td align="right">90.2439024</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">DenominatorUnweighted…113</td>
+<td align="left">DenominatorUnweighted</td>
+<td align="right">90.2439024</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">CILow…114</td>
+<td align="left">CILow</td>
+<td align="right">26.8292683</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="odd">
+<td align="left">CIHigh…115</td>
+<td align="left">CIHigh</td>
+<td align="right">26.8292683</td>
+<td align="left">Child_Mortality</td>
+</tr>
+<tr class="even">
+<td align="left">LevelRank…116</td>
+<td align="left">LevelRank</td>
+<td align="right">100.0000000</td>
+<td align="left">Child_Mortality</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="correlation-analysis" class="section level2">
+<h2>Correlation Analysis</h2>
+<pre class="r"><code>target &lt;- &quot;Value&quot;
+child_mortality$Value &lt;- as.numeric(as.character(child_mortality$Value))</code></pre>
+<pre><code>## Warning: NAs introduced by coercion</code></pre>
+<pre class="r"><code>numeric_data &lt;- child_mortality %&gt;% select(where(is.numeric))
+cor_results &lt;- data.frame(
+  Feature = colnames(numeric_data),
+  CorrelationWithTarget = sapply(numeric_data, function(x){
+    if(all(is.na(x)) || sd(x, na.rm = TRUE) == 0) return(NA)
+    cor(x, numeric_data[[target]], use = &quot;complete.obs&quot;)
+  })
+)
+
+feature_summary &lt;- left_join(missing_summary, cor_results, by=&quot;Feature&quot;) %&gt;% mutate(
+  Keep = ifelse(MissingPercent &gt; 80 | abs(CorrelationWithTarget) &lt; 0.1, &quot;No&quot;, &quot;Yes&quot;),
+  Reason = case_when(
+    MissingPercent &gt; 80 ~ &quot;Too many missing values&quot;,
+    abs(CorrelationWithTarget) &lt; 0.1 ~ &quot;Weak correlation&quot;,
+    TRUE ~ &quot;Relevant&quot;
+  )
+)
+
+kable(feature_summary, caption = &quot;Feature Usability Summary&quot;)</code></pre>
+<table>
+<caption>Feature Usability Summary</caption>
+<colgroup>
+<col width="21%" />
+<col width="13%" />
+<col width="17%" />
+<col width="20%" />
+<col width="4%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Feature</th>
+<th align="right">MissingPercent</th>
+<th align="left">Dataset</th>
+<th align="right">CorrelationWithTarget</th>
+<th align="left">Keep</th>
+<th align="left">Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">ISO3</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">DataId</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">Indicator</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">Value</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">1.0000000</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">Precision</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">DHS_CountryCode</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">CountryName</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyYear</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyId</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">IndicatorId</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">IndicatorOrder</td>
+<td align="right">0.3623188</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">0.4331566</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">IndicatorType</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicId</td>
+<td align="right">0.3623188</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">0.2316770</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicOrder</td>
+<td align="right">0.3623188</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">-0.1240480</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicCategory</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">ByVariableId</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">ByVariableLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">IsTotal</td>
+<td align="right">0.3623188</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">IsPreferred</td>
+<td align="right">0.3623188</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">0.1907488</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">SDRID</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">RegionId</td>
+<td align="right">100.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyYearLabel</td>
+<td align="right">0.3623188</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">-0.0636188</td>
+<td align="left">No</td>
+<td align="left">Weak correlation</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyType</td>
+<td align="right">0.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">DenominatorWeighted</td>
+<td align="right">12.6811594</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">0.1814778</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">DenominatorUnweighted</td>
+<td align="right">12.6811594</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">0.1742638</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">CILow</td>
+<td align="right">100.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">0.9947535</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="even">
+<td align="left">CIHigh</td>
+<td align="right">100.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">0.9968934</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="odd">
+<td align="left">LevelRank</td>
+<td align="right">100.0000000</td>
+<td align="left">Access_Healthcare</td>
+<td align="right">NA</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="even">
+<td align="left">ISO3</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">DataId</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">Indicator</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">Value</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">1.0000000</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">Precision</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">DHS_CountryCode</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">CountryName</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyYear</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyId</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">IndicatorId</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">IndicatorOrder</td>
+<td align="right">4.5454545</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">0.4331566</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">IndicatorType</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicId</td>
+<td align="right">4.5454545</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">0.2316770</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicOrder</td>
+<td align="right">4.5454545</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">-0.1240480</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicCategory</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">ByVariableId</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">ByVariableLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">IsTotal</td>
+<td align="right">4.5454545</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">IsPreferred</td>
+<td align="right">4.5454545</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">0.1907488</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">SDRID</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">RegionId</td>
+<td align="right">100.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyYearLabel</td>
+<td align="right">4.5454545</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">-0.0636188</td>
+<td align="left">No</td>
+<td align="left">Weak correlation</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyType</td>
+<td align="right">0.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">DenominatorWeighted</td>
+<td align="right">90.9090909</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">0.1814778</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="odd">
+<td align="left">DenominatorUnweighted</td>
+<td align="right">72.7272727</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">0.1742638</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">CILow</td>
+<td align="right">86.3636364</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">0.9947535</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="odd">
+<td align="left">CIHigh</td>
+<td align="right">86.3636364</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">0.9968934</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="even">
+<td align="left">LevelRank</td>
+<td align="right">100.0000000</td>
+<td align="left">Maternal_Mortality</td>
+<td align="right">NA</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="odd">
+<td align="left">ISO3</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">DataId</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">Indicator</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">Value</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">1.0000000</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">Precision</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">DHS_CountryCode</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">CountryName</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyYear</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyId</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">IndicatorId</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">IndicatorOrder</td>
+<td align="right">0.8547009</td>
+<td align="left">Immunization</td>
+<td align="right">0.4331566</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">IndicatorType</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicId</td>
+<td align="right">0.8547009</td>
+<td align="left">Immunization</td>
+<td align="right">0.2316770</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicOrder</td>
+<td align="right">0.8547009</td>
+<td align="left">Immunization</td>
+<td align="right">-0.1240480</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicCategory</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">ByVariableId</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">ByVariableLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">IsTotal</td>
+<td align="right">0.8547009</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">IsPreferred</td>
+<td align="right">0.8547009</td>
+<td align="left">Immunization</td>
+<td align="right">0.1907488</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">SDRID</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">RegionId</td>
+<td align="right">100.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyYearLabel</td>
+<td align="right">0.8547009</td>
+<td align="left">Immunization</td>
+<td align="right">-0.0636188</td>
+<td align="left">No</td>
+<td align="left">Weak correlation</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyType</td>
+<td align="right">0.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">DenominatorWeighted</td>
+<td align="right">7.6923077</td>
+<td align="left">Immunization</td>
+<td align="right">0.1814778</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">DenominatorUnweighted</td>
+<td align="right">7.6923077</td>
+<td align="left">Immunization</td>
+<td align="right">0.1742638</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">CILow</td>
+<td align="right">100.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">0.9947535</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="even">
+<td align="left">CIHigh</td>
+<td align="right">100.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">0.9968934</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="odd">
+<td align="left">LevelRank</td>
+<td align="right">100.0000000</td>
+<td align="left">Immunization</td>
+<td align="right">NA</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="even">
+<td align="left">ISO3</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">DataId</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">Indicator</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">Value</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">1.0000000</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">Precision</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">DHS_CountryCode</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">CountryName</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyYear</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyId</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">IndicatorId</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">IndicatorOrder</td>
+<td align="right">2.4390244</td>
+<td align="left">Child_Mortality</td>
+<td align="right">0.4331566</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">IndicatorType</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicId</td>
+<td align="right">2.4390244</td>
+<td align="left">Child_Mortality</td>
+<td align="right">0.2316770</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicOrder</td>
+<td align="right">2.4390244</td>
+<td align="left">Child_Mortality</td>
+<td align="right">-0.1240480</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">CharacteristicCategory</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">CharacteristicLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">ByVariableId</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">ByVariableLabel</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">IsTotal</td>
+<td align="right">2.4390244</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">IsPreferred</td>
+<td align="right">2.4390244</td>
+<td align="left">Child_Mortality</td>
+<td align="right">0.1907488</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">SDRID</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">RegionId</td>
+<td align="right">100.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="even">
+<td align="left">SurveyYearLabel</td>
+<td align="right">2.4390244</td>
+<td align="left">Child_Mortality</td>
+<td align="right">-0.0636188</td>
+<td align="left">No</td>
+<td align="left">Weak correlation</td>
+</tr>
+<tr class="odd">
+<td align="left">SurveyType</td>
+<td align="right">0.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">DenominatorWeighted</td>
+<td align="right">90.2439024</td>
+<td align="left">Child_Mortality</td>
+<td align="right">0.1814778</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="odd">
+<td align="left">DenominatorUnweighted</td>
+<td align="right">90.2439024</td>
+<td align="left">Child_Mortality</td>
+<td align="right">0.1742638</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+<tr class="even">
+<td align="left">CILow</td>
+<td align="right">26.8292683</td>
+<td align="left">Child_Mortality</td>
+<td align="right">0.9947535</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="odd">
+<td align="left">CIHigh</td>
+<td align="right">26.8292683</td>
+<td align="left">Child_Mortality</td>
+<td align="right">0.9968934</td>
+<td align="left">Yes</td>
+<td align="left">Relevant</td>
+</tr>
+<tr class="even">
+<td align="left">LevelRank</td>
+<td align="right">100.0000000</td>
+<td align="left">Child_Mortality</td>
+<td align="right">NA</td>
+<td align="left">No</td>
+<td align="left">Too many missing values</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="interpretation-of-feature-selection" class="section level2">
+<h2>Interpretation of Feature Selection</h2>
+<p>Based on the missing values analysis and feature correlation with the
+target variables, we identified and removed features that are either
+incomplete or irrelevant for modelling. The decisions were guided by two
+main criteria:</p>
+<p>High missingness: Features with over 80% missing data are considered
+unreliable for analysis and were removed.</p>
+<p>Low correlation: Features with correlation below 0.1 with the target
+variable are unlikely to contribute meaningfully to predictive models
+and were excluded unless domain knowledge suggested otherwise.</p>
+</div>
+<div id="key-decisions-by-dataset" class="section level2">
+<h2>Key Decisions by Dataset</h2>
+<p>Access to Healthcare Dataset:</p>
+<p>Removed: CILow, CIHigh, RegionId, LevelRank</p>
+<p>Reason: These columns had 100% missing values or no meaningful
+data.</p>
+<p>Retained: Features such as IndicatorOrder, CharacteristicId, and
+IsPreferred showed moderate correlations with the target and were
+kept.</p>
+<p>Maternal Mortality Dataset:</p>
+<p>Removed: CILow, CIHigh, RegionId, LevelRank, and
+DenominatorWeighted</p>
+<p>Reason: These fields either had extremely high missingness or weak
+correlation with maternal mortality indicators.</p>
+<p>Retained: Fields like IndicatorOrder, CharacteristicId, and
+DenominatorUnweighted were preserved due to moderate correlation and
+potential relevance.</p>
+<p>Immunization Dataset:</p>
+<p>Removed: CILow, CIHigh, RegionId, and LevelRank</p>
+<p>Reason: All had 100% missing values, making them unusable.</p>
+<p>Retained: Most other columns had low to moderate missingness and
+demonstrated relevance to the project’s goal of assessing immunization
+coverage.</p>
+<p>Child Mortality Dataset:</p>
+<p>Removed: RegionId, LevelRank, DenominatorWeighted,
+DenominatorUnweighted</p>
+<p>Reason: These columns either had missing data exceeding 90% or showed
+minimal correlation with child mortality outcomes.</p>
+<p>Retained: CIHigh and CILow were kept here due to strong correlation
+values (~0.99), despite higher missingness, indicating they may be
+useful when available.</p>
 </div>
 </div>
 
