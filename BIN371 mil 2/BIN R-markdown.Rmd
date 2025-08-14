@@ -144,4 +144,105 @@ ggplot(access_healthcare, aes(x = Value)) +
 
 
 ```
+##(Data selection and Test start)
+##Ensure Value and SurveyYear are numeric
+```{r convert-to-numeric}
+
+access_healthcare$Value <- as.numeric(as.character(access_healthcare$Value))
+child_mortality$Value <- as.numeric(as.character(child_mortality$Value))
+maternal_mortality$Value <- as.numeric(as.character(maternal_mortality$Value))
+immunization$Value <- as.numeric(as.character(immunization$Value))
+
+access_healthcare$SurveyYear <- as.numeric(as.character(access_healthcare$SurveyYear))
+child_mortality$SurveyYear <- as.numeric(as.character(child_mortality$SurveyYear))
+maternal_mortality$SurveyYear <- as.numeric(as.character(maternal_mortality$SurveyYear))
+immunization$SurveyYear <- as.numeric(as.character(immunization$SurveyYear))
+```
+
+##Structure summaries
+```{r structure-summaries}
+str(access_healthcare)
+str(child_mortality)
+str(maternal_mortality)
+str(immunization)
+```
+##Summary statistics
+```{r statistics}
+
+summary(access_healthcare$Value)
+summary(child_mortality$Value)
+summary(maternal_mortality$Value)
+summary(immunization$Value)
+
+summary(access_healthcare$SurveyYear)
+summary(child_mortality$SurveyYear)
+summary(maternal_mortality$SurveyYear)
+summary(immunization$SurveyYear)
+```
+##Missing values
+```{r missing-values}
+
+cat("Missing Values in Value:\nAccess to Healthcare:", sum(is.na(access_healthcare$Value)), 
+    "\nChild Mortality:", sum(is.na(child_mortality$Value)), 
+    "\nMaternal Mortality:", sum(is.na(maternal_mortality$Value)), 
+    "\nImmunization:", sum(is.na(immunization$Value)), "\n")
+```
+##BCG vaccination vs. under-five mortality
+```{bcg-under 5 Mortality(u5m)}
+bcg_data <- immunization %>%
+  filter(Indicator == "BCG vaccination received" & !is.na(Value)) %>%
+  select(SurveyYear, Value)
+
+u5m_data <- child_mortality %>%
+  filter(Indicator == "Under-five mortality rate (5 year periods)" & !is.na(Value)) %>%
+  select(SurveyYear, Value)
+
+merged_specific <- merge(bcg_data, u5m_data, by = "SurveyYear", suffixes = c("_bcg", "_u5m"))
+
+if (nrow(merged_specific) >= 2) {
+  cor_test <- cor.test(merged_specific$Value_bcg, merged_specific$Value_u5m)
+  print(cor_test)
+} else {
+  cat("No data to compare and test\n")
+}
+```
+## t-test: Child mortality (1998 vs. 2016)
+```{r t-test-child-mortality}
+
+group1 <- child_mortality %>% 
+  filter(SurveyYear == 1998 & !is.na(Value)) %>% 
+  pull(Value)
+
+group2 <- child_mortality %>% 
+  filter(SurveyYear == 2016 & !is.na(Value)) %>% 
+  pull(Value)
+
+if (length(group1) > 0 && length(group2) > 0) {
+  t_test <- t.test(group1, group2)
+  print(t_test)
+} else {
+  cat("Not enough valid data for t-test on child mortality.\n")
+}
+```
+## t-test: Access to healthcare (1998 vs. 2016)
+```{r testing-access-healthcare}
+
+group1_access <- access_healthcare %>% 
+  filter(SurveyYear == 1998 & !is.na(Value)) %>% 
+  pull(Value)
+
+group2_access <- access_healthcare %>% 
+  filter(SurveyYear == 2016 & !is.na(Value)) %>% 
+  pull(Value)
+
+if (length(group1_access) > 0 && length(group2_access) > 0) {
+  t_test_access <- t.test(group1_access, group2_access)
+  print(t_test_access)
+} else {
+  cat("Not enough valid data for t-test on access to healthcare.\n")
+}
+```
+## 1 (Data selection and test end)
+
+
 
