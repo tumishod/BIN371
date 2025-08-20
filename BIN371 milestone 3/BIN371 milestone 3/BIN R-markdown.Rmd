@@ -1,0 +1,281 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+
+# Libraries
+
+```{r load-libraries, message=FALSE, warning=FALSE}
+library(randomForest)
+library(tidyverse)
+library(knitr)
+library(ggplot2)
+library(here)
+library(readr)
+```
+
+## 2.1 Dataset Overview
+
+```{r load-data}
+access_healthcare <- read.csv("access-to-health-care_national_zaf.csv")
+maternal_mortality <- read.csv( "maternal-mortality_national_zaf.csv")
+immunization <- read.csv( "immunization_national_zaf.csv")
+child_mortality <- read.csv ("child-mortality-rates_national_zaf.csv")
+
+access_healthcare <- access_healthcare[-1, ]
+child_mortality <- child_mortality[-1, ]
+immunization <- immunization[-1, ]
+maternal_mortality <- maternal_mortality[-1, ]
+
+```
+
+#Structure of datasets
+
+```{r}
+str(access_healthcare)
+str(child_mortality)
+str(immunization)
+str(maternal_mortality)
+```
+
+#Dimensionality of data
+```{r}
+dim(access_healthcare)
+dim(child_mortality)
+dim(immunization)
+dim(maternal_mortality)
+```
+
+#Inspecting first few rows
+```{r}
+head(access_healthcare)
+head(child_mortality)
+head(immunization)
+head(maternal_mortality)
+```
+
+
+#Opens up view
+
+```{r}
+view(access_healthcare)
+view(maternal_mortality)
+view(immunization)
+view(child_mortality)
+
+```
+
+#Chnages data types
+
+```{r}
+#Changing Data types
+
+#Convert value to numeric         
+access_healthcare$Value <- as.numeric(as.character(access_healthcare$Value))
+child_mortality$Value <- as.numeric(as.character(child_mortality$Value))
+immunization$Value <- as.numeric(as.character(immunization$Value))
+maternal_mortality$Value <- as.numeric(as.character(maternal_mortality$Value))
+
+#Convert Precision to numeric
+access_healthcare$Precision <- as.numeric(as.character(access_healthcare$Precision))
+child_mortality$Precision <- as.numeric(as.character(child_mortality$Precision))
+immunization$Precision <- as.numeric(as.character(immunization$Precision))
+maternal_mortality$Precision <- as.numeric(as.character(maternal_mortality$Precision))
+
+#Convert CharacteristicId to character
+access_healthcare$CharacteristicId <- as.character(as.numeric(access_healthcare$CharacteristicId))
+child_mortality$CharacteristicId <- as.character(as.numeric(child_mortality$CharacteristicId))
+immunization$CharacteristicId <- as.character(as.numeric(immunization$CharacteristicId))
+maternal_mortality$CharacteristicId <- as.character(as.numeric(maternal_mortality$CharacteristicId))
+
+
+
+# Convert SurveyYear to numeric for plots
+access_healthcare$SurveyYear <- as.numeric(access_healthcare$SurveyYear)
+child_mortality$SurveyYear <- as.numeric(child_mortality$SurveyYear)
+immunization$SurveyYear <- as.numeric(immunization$SurveyYear)
+maternal_mortality$SurveyYear <- as.numeric(maternal_mortality$SurveyYear)
+   
+
+```
+
+#Sum of verious data
+
+```{r data-quality}
+print('summary of Health care value')
+summary(access_healthcare$Value)
+print('summary of Child Mortality value')
+summary(child_mortality$Value)
+print('summary of immunization value')
+summary(immunization$Value)
+print('summary of  maternal mortality value')
+summary(maternal_mortality$Value)
+
+print('Missing Values')
+sum(is.na(access_healthcare))
+sum(is.na(child_mortality))
+sum(is.na(immunization))
+sum(is.na(maternal_mortality))
+
+print('Duplicate values')
+sum(duplicated(access_healthcare))
+sum(duplicated(child_mortality)) 
+sum(duplicated(immunization)) 
+sum(duplicated(maternal_mortality)) 
+
+```
+
+#Visuals of data
+
+```{r e-analysis}
+
+# Plot child mortality over time
+ggplot(child_mortality, aes(x = SurveyYear, y = as.numeric(Value), color = Indicator)) +
+  geom_line() +
+  labs(title = "Child Mortality Trends in South Africa", x = "Year", y = "Mortality Rate")
+
+# Line chart of BCG vaccination over time
+ggplot(filter(immunization, Indicator == "BCG vaccination received"),
+       aes(x = SurveyYear, y = Value)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "BCG Vaccination Over Time in South Africa",
+       x = "Year", y = "Coverage (%)")
+
+#Access to Health Care - Value Distribution
+ggplot(access_healthcare, aes(x = Value)) +
+  geom_histogram(binwidth = 5, fill = "yellow", color = "black") +
+  labs(title = "Access to Health Care - Value Distribution", x = "Value", y = "Count") +
+  theme_minimal()
+
+
+```
+
+```{r}
+data_model <- child_mortality[
+  child_mortality$Indicator == "Under-five mortality rate",
+  c("SurveyYear", "Value")
+]
+
+# Remove missing values
+data_model <- data_model[complete.cases(data_model), ]
+
+# Remove duplicate rows
+data_model <- unique(data_model)
+
+# Sort by SurveyYear
+data_model <- data_model[order(data_model$SurveyYear), ]
+
+print(data_model)
+```
+##Random Forest Model Version 2
+
+```{r}
+
+# Set a seed for reproducibility so the results are consistent.
+set.seed(42) #changing seed data changes results
+
+# Create a sample of row indices for the training data //Use of percentage either 0.7(70)or 0.5(50)
+train_indices <- sample(1:nrow(data_model), 0.5 * nrow(data_model))
+
+# Split the data into training and testing sets based on the indices
+train_data <- data_model[train_indices, ]
+test_data <- data_model[-train_indices, ]
+
+# --- 3. Build the Random Forest Model ---
+rf_model <- randomForest(
+  Value ~ SurveyYear,
+  data = train_data,
+  ntree = 500, # Number of trees in the forest
+  mtry = 1,    # Number of variables to sample at each split
+  importance = TRUE # Calculate and store variable importance
+)
+
+# Print the model summary
+print("Random Forest Model Summary:")
+print(rf_model)
+
+# --- 4. Make Predictions ---
+
+# Use the trained model to make predictions on the test data.
+predictions <- predict(rf_model, newdata = test_data)
+
+# Combine the test data and predictions for comparison
+results <- data.frame(
+  Actual = test_data$Value,
+  Predicted = predictions,
+  SurveyYear = test_data$SurveyYear
+)
+
+# --- 5. Evaluate the Model ---
+
+# Calculate the Mean Absolute Error (MAE) to measure prediction accuracy.
+mae <- mean(abs(results$Actual - results$Predicted))
+print(paste("Mean Absolute Error (MAE):", round(mae, 2)))
+
+# Visualize the results
+# Plot the actual vs. predicted values to see how well the model fits the data.
+ggplot(results, aes(x = SurveyYear)) +
+  geom_line(aes(y = Actual, color = "Actual"), linewidth = 1.2) +
+  geom_point(aes(y = Actual, color = "Actual"), size = 3) +
+  geom_line(aes(y = Predicted, color = "Predicted"), linetype = "dashed", linewidth = 1.2) +
+  geom_point(aes(y = Predicted, color = "Predicted"), shape = 1, size = 3) +
+  labs(
+    title = "Random Forest Model Predictions vs. Actual Values",
+    x = "Survey Year",
+    y = "Under-five Mortality Rate",
+    color = "Legend"
+  ) +
+  scale_color_manual(values = c("Actual" = "purple", "Predicted" = "red")) +
+  theme_minimal()
+
+
+```
+
+##Validation set
+```{r}
+set.seed(42)
+n <- nrow(data_model)
+indices <- sample(1:n)
+
+train_end <- floor(0.7 * n)
+valid_end <- floor(0.9 * n)
+
+train_indices <- indices[1:train_end]
+valid_indices <- indices[(train_end + 1):valid_end]
+test_indices  <- indices[(valid_end + 1):n]
+
+train_data <- data_model[train_indices, ]
+valid_data <- data_model[valid_indices, ]
+test_data  <- data_model[test_indices, ]
+
+```
+##wprk around Cross-validation procedure
+```{r}
+## Random Forest Regression
+train_data$Value <- as.numeric(train_data$Value)
+test_data$Value  <- as.numeric(test_data$Value)
+
+rf_model <- randomForest(Value ~ SurveyYear, data = train_data, ntree = 500, mtry = 1)
+print(rf_model)
+
+# Predictions
+preds <- predict(rf_model, newdata = test_data)
+
+# Results + Metrics
+results <- data.frame(
+  Actual = test_data$Value,
+  Predicted = preds
+)
+
+mae  <- mean(abs(results$Actual - results$Predicted))
+rmse <- sqrt(mean((results$Actual - results$Predicted)^2))
+r2   <- cor(results$Actual, results$Predicted)^2
+
+print(paste("MAE:", round(mae, 2)))
+print(paste("RMSE:", round(rmse, 2)))
+print(paste("R-squared:", round(r2, 2)))
+
+
+```

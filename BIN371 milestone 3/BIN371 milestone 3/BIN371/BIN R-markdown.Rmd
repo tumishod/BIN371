@@ -1,0 +1,112 @@
+# Libraries
+
+```{r load-libraries, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(knitr)
+library(ggplot2)
+library(here)
+library(readr)
+```
+
+## 2.1 Dataset Overview
+
+```{r load-data}
+access_healthcare <- read.csv("access-to-health-care_national_zaf.csv")
+maternal_mortality <- read.csv( "maternal-mortality_national_zaf.csv")
+immunization <- read.csv( "immunization_national_zaf.csv")
+child_mortality <- read.csv ("child-mortality-rates_national_zaf.csv")
+
+access_healthcare <- access_healthcare[-1, ]
+child_mortality <- child_mortality[-1, ]
+immunization <- immunization[-1, ]
+maternal_mortality <- maternal_mortality[-1, ]
+
+```
+
+#Structure of datasets
+```{r}
+str(access_healthcare)
+str(child_mortality)
+str(immunization)
+str(maternal_mortality)
+```
+
+#Opens up view
+```{r}
+view(access_healthcare)
+view(maternal_mortality)
+view(immunization)
+view(child_mortality)
+
+```
+
+#Chnages data types
+
+```{r}
+#Changing Data types
+
+#Convert value to numeric         
+access_healthcare$Value <- as.numeric(as.character(access_healthcare$Value))
+child_mortality$Value <- as.numeric(as.character(child_mortality$Value))
+immunization$Value <- as.numeric(as.character(immunization$Value))
+maternal_mortality$Value <- as.numeric(as.character(maternal_mortality$Value))
+
+# Convert SurveyYear to numeric for plots
+access_healthcare$SurveyYear <- as.numeric(access_healthcare$SurveyYear)
+child_mortality$SurveyYear <- as.numeric(child_mortality$SurveyYear)
+immunization$SurveyYear <- as.numeric(immunization$SurveyYear)
+maternal_mortality$SurveyYear <- as.numeric(maternal_mortality$SurveyYear)
+   
+
+```
+#Sum of verious data
+
+```{r data-quality}
+print('summary of Health care value')
+summary(access_healthcare$Value)
+print('summary of Child Mortality value')
+summary(child_mortality$Value)
+print('summary of immunization value')
+summary(immunization$Value)
+print('summary of  maternal mortality value')
+summary(maternal_mortality$Value)
+
+print('Missing Values')
+sum(is.na(access_healthcare))
+sum(is.na(child_mortality))
+sum(is.na(immunization))
+sum(is.na(maternal_mortality))
+
+print('Duplicate values')
+sum(duplicated(access_healthcare))
+sum(duplicated(child_mortality)) 
+sum(duplicated(immunization)) 
+sum(duplicated(maternal_mortality)) 
+
+```
+#Visuals of data
+
+```{r e-analysis}
+
+# Plot child mortality over time
+ggplot(child_mortality, aes(x = SurveyYear, y = as.numeric(Value), color = Indicator)) +
+  geom_line() +
+  labs(title = "Child Mortality Trends in South Africa", x = "Year", y = "Mortality Rate")
+
+# Line chart of BCG vaccination over time
+ggplot(filter(immunization, Indicator == "BCG vaccination received"),
+       aes(x = SurveyYear, y = Value)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "BCG Vaccination Over Time in South Africa",
+       x = "Year", y = "Coverage (%)")
+
+#Access to Health Care - Value Distribution
+ggplot(access_healthcare, aes(x = Value)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", color = "black") +
+  labs(title = "Access to Health Care - Value Distribution", x = "Value", y = "Count") +
+  theme_minimal()
+
+
+```
+
