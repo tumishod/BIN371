@@ -13,6 +13,7 @@ library(knitr)
 library(ggplot2)
 library(here)
 library(readr)
+library(dplyr)
 ```
 
 ## 2.1 Dataset Overview
@@ -279,3 +280,161 @@ print(paste("R-squared:", round(r2, 2)))
 
 
 ```
+## 3. Random Forest Model for Under-five Mortality
+
+This section implements a Random Forest regression model to predict **under-five child mortality** in South Africa using survey year as the predictor.
+
+### 3.1 Model Overview
+
+Random Forest is an ensemble learning method that constructs multiple decision trees and aggregates their predictions to improve accuracy and reduce overfitting.  
+**Strengths:** Handles non-linear relationships, robust to outliers, provides variable importance.  
+**Limitations:** Less interpretable than single decision trees, requires parameter tuning, can be computationally intensive.
+
+### 3.2 Data Preparation
+
+```{r data-prep}
+# Filter dataset for the target indicator
+data_model <- child_mortality %>%
+  filter(Indicator == "Under-five mortality rate") %>%
+  select(SurveyYear, Value) %>%
+  mutate(Value = as.numeric(Value)) %>%
+  unique() %>%
+  arrange(SurveyYear)
+
+# Split into training (70%) and test (30%) sets
+set.seed(123)
+train_index <- sample(1:nrow(data_model), 0.7 * nrow(data_model))
+train_data <- data_model[train_index, ]
+test_data  <- data_model[-train_index, ]
+
+```
+
+### 3.3 Model Building
+
+We use 500 trees (ntree = 500) to ensure stability in predictions and mtry = 1 because there is only one predictor. Minimum node size (nodesize = 5) controls tree depth to prevent overfitting.
+
+```{r}
+
+rf_model <- randomForest(
+  Value ~ SurveyYear,
+  data = train_data,
+  ntree = 500,
+  mtry = 1,
+  nodesize = 5,
+  importance = TRUE
+)
+
+# Model summary
+print(rf_model)
+```
+
+### 3.4 Predictions and Evaluation
+
+```{r}
+
+# Predictions on test data
+predictions <- predict(rf_model, newdata = test_data)
+
+# Evaluation metrics
+MAE  <- mean(abs(predictions - test_data$Value))
+RMSE <- sqrt(mean((predictions - test_data$Value)^2))
+R2   <- 1 - sum((test_data$Value - predictions)^2) / sum((test_data$Value - mean(test_data$Value))^2)
+
+cat("Mean Absolute Error (MAE):", round(MAE, 2), "\n")
+cat("Root Mean Squared Error (RMSE):", round(RMSE, 2), "\n")
+cat("R² (Coefficient of Determination):", round(R2, 2), "\n")
+```
+
+## 4. Random Forest Regression: Under-five Mortality
+
+This section uses a Random Forest regression to model and predict **under-five child mortality** in South Africa based on survey year.
+
+### 4.1 Data Preparation
+
+```{r rf-data-prep}
+
+#
+data_model <- child_mortality %>%
+  filter(Indicator == "Under-five mortality rate") %>%
+  mutate(
+    Value = as.numeric(Value),
+    SurveyYear = as.numeric(SurveyYear)
+  ) %>%
+  group_by(SurveyYear) %>%
+  summarise(Value = mean(Value)) %>%
+  arrange(SurveyYear)
+
+print(data_model)
+
+# Train/test split: 70% train, 30% test
+set.seed(123)
+rf_model <- randomForest(Value ~ SurveyYear, data = data_model, ntree = 500, mtry = 1)
+predictions <- predict(rf_model, newdata = data_model)
+```
+
+### 4.2 Model Building
+```{r}
+rf_model <- randomForest(
+  Value ~ SurveyYear,
+  data = train_data,
+  ntree = 500,   # number of trees
+  mtry = 1,      # number of variables sampled per split
+  nodesize = 5,  # minimum samples per terminal node
+  importance = TRUE
+)
+
+print(rf_model)
+```
+### 4.3 Predictions and Evaluation
+
+```{r}
+
+predictions <- predict(rf_model, newdata = test_data)
+
+MAE  <- mean(abs(predictions - test_data$Value))
+RMSE <- sqrt(mean((predictions - test_data$Value)^2))
+R2   <- 1 - sum((test_data$Value - predictions)^2) / sum((test_data$Value - mean(test_data$Value))^2)
+
+cat("Mean Absolute Error (MAE):", round(MAE, 2), "\n")
+cat("Root Mean Squared Error (RMSE):", round(RMSE, 2), "\n")
+cat("R² (Coefficient of Determination):", round(R2, 2), "\n")
+```
+### 4.4 Results Visualization
+```{r}
+
+# Linear model (more appropriate for 2 points)
+lm_model <- lm(Value ~ SurveyYear, data = data_model)
+summary(lm_model)
+
+# Predictions
+predictions <- predict(lm_model, newdata = data_model)
+
+# Plot
+results <- data.frame(
+  SurveyYear = data_model$SurveyYear,
+  Actual = data_model$Value,
+  Predicted = predictions
+)
+
+ggplot(results, aes(x = SurveyYear)) +
+  geom_point(aes(y = Actual), color = "purple", size = 3) +
+  geom_line(aes(y = Actual), color = "purple", linewidth = 1.2) +
+  geom_line(aes(y = Predicted), color = "red", linetype = "dashed", linewidth = 1.2) +
+  labs(
+    title = "Linear Model Predictions vs Actual Under-five Mortality",
+    x = "Survey Year",
+    y = "Mortality Rate"
+  ) +
+  theme_minimal()
+```
+### 4.5 Variable Importance
+
+```{r}
+importance(rf_model)
+varImpPlot(rf_model)
+```
+%IncMSE = 0 → No other variable to compare; permuting it doesn't change the model much (because only one predictor exists).
+
+IncNodePurity = 0 → Same reason; it's the only variable, so the importance metrics aren’t meaningful.
+
+Basically, variable importance is most useful when you have multiple predictors.
